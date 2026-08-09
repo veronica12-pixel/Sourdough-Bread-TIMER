@@ -92,12 +92,15 @@
 
   .tab-panel { display: none; flex-direction: column; gap: 24px; }
   .tab-panel.active { display: flex; }
+  .tab-panel.active > * { width: 100%; box-sizing: border-box; }
 
   .top-tabs {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
     gap: 8px;
     margin-top: 4px;
+    width: 100%;
+    box-sizing: border-box;
   }
   .top-tab-btn {
     width: 100%;
@@ -105,22 +108,33 @@
     border: 1px solid var(--line);
     background: var(--card);
     box-shadow: var(--shadow-sm);
-    border-radius: 999px;
-    padding: 11px 14px;
-    font-size: 14.5px;
+    border-radius: 18px;
+    padding: 9px 14px;
+    font-family: inherit;
+    font-size: 16px;
     font-weight: 700;
-    letter-spacing: 0.01em;
+    line-height: 1.2;
     color: var(--muted);
     cursor: pointer;
-    font-family: inherit;
-    white-space: nowrap;
+    white-space: normal;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 44px;
+    gap: 8px;
+    text-align: center;
     transition: background-color .15s ease, color .15s ease;
   }
+  .top-tab-btn[data-tab="bake"] { background: #FFE8CC; border-color: #FFC98B; color: #9A6A2E; }
+  .top-tab-btn[data-tab="recipe"] { background: #DBF3DC; border-color: #A8E6B0; color: #3F7A47; }
+  .top-tab-btn[data-tab="testimonials"] { background: #CFE6FB; border-color: #9CC9F0; color: #3A6A96; }
+  .top-tab-btn[data-tab="calculator"] { background: #EBDCF7; border-color: #D0B8EA; color: #6F4E92; }
+  .top-tab-btn[data-tab="ddt"] { background: #FADCF0; border-color: #E8AEDD; color: #9C4F87; }
   .top-tab-btn.active {
     background: var(--accent);
     color: #FBF3E9;
     border-color: var(--accent);
-    box-shadow: 0 3px 10px rgba(224,145,199,0.4);
+    box-shadow: 0 1px 4px rgba(224,145,199,0.35);
   }
   .toggle-btn {
     width: auto;
@@ -228,7 +242,7 @@
   #foldsToggleRow {
     margin-bottom: 4px;
   }
-  /* Extra air between open Folds panel and Final % Rise */
+  /* Extra air between open Folds panel and Final Proof */
   #foldCardsContainer[style*="flex"],
   #foldCardsContainer[style*="block"] {
     margin-bottom: 36px;
@@ -823,11 +837,12 @@
 
     <!-- TOP TAB SWITCHER -->
     <div class="top-tabs" id="topTabs1">
-      <button type="button" class="top-tab-btn active" id="tabBtn_bake_1" data-tab="bake">&#127838; Bake</button>
-      <button type="button" class="top-tab-btn" id="tabBtn_recipe_1" data-tab="recipe">&#128220; Recipes</button>
-      <button type="button" class="top-tab-btn" id="tabBtn_testimonials_1" data-tab="testimonials" title="Testimonials">&#127838; Bread Pictures</button>
-      <button type="button" class="top-tab-btn" id="tabBtn_calculator_1" data-tab="calculator" title="Levain Calculator">&#129518; Levain Calculator</button>
+      <button type="button" class="top-tab-btn active" id="tabBtn_bake_1" data-tab="bake">Bake</button>
+      <button type="button" class="top-tab-btn" id="tabBtn_recipe_1" data-tab="recipe">Recipes</button>
+      <button type="button" class="top-tab-btn" id="tabBtn_testimonials_1" data-tab="testimonials" title="Testimonials">Bread Pictures</button>
+      <button type="button" class="top-tab-btn" id="tabBtn_calculator_1" data-tab="calculator" title="Levain Calculator">Levain Calculator</button>
     </div>
+    <button type="button" class="top-tab-btn" id="tabBtn_ddt_1" data-tab="ddt" title="DDT Calculator" style="width:100%; box-sizing:border-box; margin-top:8px;">DDT Desired Dough Temperature</button>
 
     <button type="button" id="openSaveBtn" style="display:block; width:100%; text-align:center; font-size:12px; color:var(--muted-light); margin:2px 0 0; cursor:pointer; background:transparent; border:1px solid var(--line); border-radius:999px; padding:8px; font-family:inherit;">&copy; Thor 2026 · Timer v2.1</button>
   </div>
@@ -857,11 +872,12 @@
       <textarea id="recipeNotesInput" placeholder="Anything you want to remember about this recipe&hellip;" style="width:100%; box-sizing:border-box; height:120px; max-height:220px; overflow-y:auto; resize:vertical; border-radius:12px; border:1px solid var(--line-strong); padding:10px 12px; font-size:15px; font-family:inherit; color:var(--ink); line-height:1.4;"></textarea>
     </div>
     <div class="top-tabs" id="topTabs2">
-      <button type="button" class="top-tab-btn" id="tabBtn_bake_2" data-tab="bake">&#127838; Bake</button>
-      <button type="button" class="top-tab-btn active" id="tabBtn_recipe_2" data-tab="recipe">&#128220; Recipes</button>
-      <button type="button" class="top-tab-btn" id="tabBtn_testimonials_2" data-tab="testimonials" title="Testimonials">&#127838; Bread Pictures</button>
-      <button type="button" class="top-tab-btn" id="tabBtn_calculator_2" data-tab="calculator" title="Levain Calculator">&#129518; Levain Calculator</button>
+      <button type="button" class="top-tab-btn" id="tabBtn_bake_2" data-tab="bake">Bake</button>
+      <button type="button" class="top-tab-btn active" id="tabBtn_recipe_2" data-tab="recipe">Recipes</button>
+      <button type="button" class="top-tab-btn" id="tabBtn_testimonials_2" data-tab="testimonials" title="Testimonials">Bread Pictures</button>
+      <button type="button" class="top-tab-btn" id="tabBtn_calculator_2" data-tab="calculator" title="Levain Calculator">Levain Calculator</button>
     </div>
+    <button type="button" class="top-tab-btn" id="tabBtn_ddt_2" data-tab="ddt" title="DDT Calculator" style="width:100%; box-sizing:border-box; margin-top:8px;">DDT Desired Dough Temperature</button>
     <button type="button" id="openSaveBtnRecipe" style="display:block; width:100%; text-align:center; font-size:12px; color:var(--muted-light); margin:8px 0 0; cursor:pointer; background:transparent; border:1px solid var(--line); border-radius:999px; padding:8px; font-family:inherit;">&copy; Thor 2026 · Timer v2.1</button>
   </div>
 
@@ -884,11 +900,12 @@
       </label>
     </div>
     <div class="top-tabs" id="topTabs3">
-      <button type="button" class="top-tab-btn" id="tabBtn_bake_3" data-tab="bake">&#127838; Bake</button>
-      <button type="button" class="top-tab-btn" id="tabBtn_recipe_3" data-tab="recipe">&#128220; Recipes</button>
-      <button type="button" class="top-tab-btn active" id="tabBtn_testimonials_3" data-tab="testimonials" title="Testimonials">&#127838; Bread Pictures</button>
-      <button type="button" class="top-tab-btn" id="tabBtn_calculator_3" data-tab="calculator" title="Levain Calculator">&#129518; Levain Calculator</button>
+      <button type="button" class="top-tab-btn" id="tabBtn_bake_3" data-tab="bake">Bake</button>
+      <button type="button" class="top-tab-btn" id="tabBtn_recipe_3" data-tab="recipe">Recipes</button>
+      <button type="button" class="top-tab-btn active" id="tabBtn_testimonials_3" data-tab="testimonials" title="Testimonials">Bread Pictures</button>
+      <button type="button" class="top-tab-btn" id="tabBtn_calculator_3" data-tab="calculator" title="Levain Calculator">Levain Calculator</button>
     </div>
+    <button type="button" class="top-tab-btn" id="tabBtn_ddt_3" data-tab="ddt" title="DDT Calculator" style="width:100%; box-sizing:border-box; margin-top:8px;">DDT Desired Dough Temperature</button>
     <button type="button" id="openSaveBtnTestimonials" style="display:block; width:100%; text-align:center; font-size:12px; color:var(--muted-light); margin:8px 0 0; cursor:pointer; background:transparent; border:1px solid var(--line); border-radius:999px; padding:8px; font-family:inherit;">&copy; Thor 2026 · Timer v2.1</button>
   </div>
 
@@ -955,12 +972,12 @@
       <p class="ingredients-title" style="margin:0 0 10px;">Calculated Ingredients</p>
       <div style="display:flex; gap:8px;">
         <div style="flex:1; background:var(--accent-tint); border-radius:12px; padding:12px; text-align:center;">
-          <p style="margin:0; font-size:11px; letter-spacing:0.05em; text-transform:uppercase; color:var(--muted);">Flour</p>
-          <p id="levainCalcFlourOut" style="margin:4px 0 0; font-size:20px; font-weight:700; color:var(--ink);">0g</p>
-        </div>
-        <div style="flex:1; background:var(--accent-tint); border-radius:12px; padding:12px; text-align:center;">
           <p style="margin:0; font-size:11px; letter-spacing:0.05em; text-transform:uppercase; color:var(--muted);">Starter</p>
           <p id="levainCalcStarterOut" style="margin:4px 0 0; font-size:20px; font-weight:700; color:var(--ink);">0g</p>
+        </div>
+        <div style="flex:1; background:var(--accent-tint); border-radius:12px; padding:12px; text-align:center;">
+          <p style="margin:0; font-size:11px; letter-spacing:0.05em; text-transform:uppercase; color:var(--muted);">Flour</p>
+          <p id="levainCalcFlourOut" style="margin:4px 0 0; font-size:20px; font-weight:700; color:var(--ink);">0g</p>
         </div>
         <div style="flex:1; background:var(--accent-tint); border-radius:12px; padding:12px; text-align:center;">
           <p style="margin:0; font-size:11px; letter-spacing:0.05em; text-transform:uppercase; color:var(--muted);">Water</p>
@@ -969,13 +986,13 @@
       </div>
 
       <div style="display:flex; height:14px; border-radius:999px; overflow:hidden; margin-top:14px; box-shadow: inset 0 0 0 1px rgba(59,47,34,0.1);">
-        <div id="levainCalcBarFlour" style="background:#E0AA6B;"></div>
         <div id="levainCalcBarStarter" style="background:#3B2F22;"></div>
+        <div id="levainCalcBarFlour" style="background:#E0AA6B;"></div>
         <div id="levainCalcBarWater" style="background:#7CA8C7;"></div>
       </div>
       <div style="display:flex; gap:14px; justify-content:center; margin-top:8px; font-size:12px; color:var(--muted);">
-        <span><span style="display:inline-block; width:8px; height:8px; border-radius:50%; background:#E0AA6B; margin-right:4px;"></span>Flour</span>
         <span><span style="display:inline-block; width:8px; height:8px; border-radius:50%; background:#3B2F22; margin-right:4px;"></span>Starter</span>
+        <span><span style="display:inline-block; width:8px; height:8px; border-radius:50%; background:#E0AA6B; margin-right:4px;"></span>Flour</span>
         <span><span style="display:inline-block; width:8px; height:8px; border-radius:50%; background:#7CA8C7; margin-right:4px;"></span>Water</span>
       </div>
 
@@ -999,12 +1016,66 @@
     <button type="button" class="pill solid" id="levainCalcApplyBtn" style="width:100%; box-sizing:border-box; justify-content:center;">Use these amounts for Levain</button>
 
     <div class="top-tabs" id="topTabs4">
-      <button type="button" class="top-tab-btn" id="tabBtn_bake_4" data-tab="bake">&#127838; Bake</button>
-      <button type="button" class="top-tab-btn" id="tabBtn_recipe_4" data-tab="recipe">&#128220; Recipes</button>
-      <button type="button" class="top-tab-btn" id="tabBtn_testimonials_4" data-tab="testimonials" title="Testimonials">&#127838; Bread Pictures</button>
-      <button type="button" class="top-tab-btn active" id="tabBtn_calculator_4" data-tab="calculator" title="Levain Calculator">&#129518; Levain Calculator</button>
+      <button type="button" class="top-tab-btn" id="tabBtn_bake_4" data-tab="bake">Bake</button>
+      <button type="button" class="top-tab-btn" id="tabBtn_recipe_4" data-tab="recipe">Recipes</button>
+      <button type="button" class="top-tab-btn" id="tabBtn_testimonials_4" data-tab="testimonials" title="Testimonials">Bread Pictures</button>
+      <button type="button" class="top-tab-btn active" id="tabBtn_calculator_4" data-tab="calculator" title="Levain Calculator">Levain Calculator</button>
     </div>
+    <button type="button" class="top-tab-btn" id="tabBtn_ddt_4" data-tab="ddt" title="DDT Calculator" style="width:100%; box-sizing:border-box; margin-top:8px;">DDT Desired Dough Temperature</button>
     <button type="button" id="openSaveBtnCalculator" style="display:block; width:100%; text-align:center; font-size:12px; color:var(--muted-light); margin:8px 0 0; cursor:pointer; background:transparent; border:1px solid var(--line); border-radius:999px; padding:8px; font-family:inherit;">&copy; Thor 2026 · Timer v2.1</button>
+  </div>
+
+  <!-- DDT CALCULATOR TAB -->
+  <div class="tab-panel" id="tab-ddt">
+    <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:12px;">
+      <h1 class="serif">DDT Calculator</h1>
+      <button type="button" id="ddtBackBtn" title="Back" style="width:40px; height:40px; border-radius:50%; border:1px solid var(--line); background:var(--card); box-shadow:var(--shadow-sm); display:flex; align-items:center; justify-content:center; cursor:pointer; padding:0; flex-shrink:0;">
+        <span style="display:inline-block; transform:rotate(-90deg); font-size:14px; color:var(--ink);">&#9650;</span>
+      </button>
+    </div>
+    <p class="subtitle" style="margin:0;">Calculate the water temperature you need to hit your target Desired Dough Temperature.</p>
+
+    <div class="recipe-phase-card">
+      <p class="ingredients-title" style="margin:0 0 4px;">Desired Dough Temperature (DDT)</p>
+      <p style="font-size:13px; color:var(--muted); margin:0 0 10px;">DDT &times; 4 = X &nbsp;&middot;&nbsp; Flour + Room + Starter + Friction = Y &nbsp;&middot;&nbsp; X &minus; Y = Water Temp. Machine friction factor is 0 when mixing by hand.</p>
+      <div style="display:flex; flex-direction:column; gap:10px;">
+        <label style="font-size:13px; color:var(--muted); display:flex; flex-direction:column; gap:4px;">
+          Desired Dough Temperature (&deg;F)
+          <input type="number" id="ddtTarget" inputmode="decimal" value="78" style="border-radius:10px; border:1px solid var(--line-strong); padding:8px 10px; font-size:16px; font-family:inherit; color:var(--ink);" />
+        </label>
+        <label style="font-size:13px; color:var(--muted); display:flex; flex-direction:column; gap:4px;">
+          Flour Temp (&deg;F)
+          <input type="number" id="ddtFlourTemp" inputmode="decimal" value="70" style="border-radius:10px; border:1px solid var(--line-strong); padding:8px 10px; font-size:16px; font-family:inherit; color:var(--ink);" />
+        </label>
+        <label style="font-size:13px; color:var(--muted); display:flex; flex-direction:column; gap:4px;">
+          Room Temp (&deg;F)
+          <input type="number" id="ddtRoomTemp" inputmode="decimal" value="70" style="border-radius:10px; border:1px solid var(--line-strong); padding:8px 10px; font-size:16px; font-family:inherit; color:var(--ink);" />
+        </label>
+        <label style="font-size:13px; color:var(--muted); display:flex; flex-direction:column; gap:4px;">
+          Starter Temp (&deg;F)
+          <input type="number" id="ddtStarterTemp" inputmode="decimal" value="70" style="border-radius:10px; border:1px solid var(--line-strong); padding:8px 10px; font-size:16px; font-family:inherit; color:var(--ink);" />
+        </label>
+        <label style="font-size:13px; color:var(--muted); display:flex; flex-direction:column; gap:4px;">
+          Machine Friction Factor
+          <input type="number" id="ddtFriction" inputmode="decimal" value="20" style="border-radius:10px; border:1px solid var(--line-strong); padding:8px 10px; font-size:16px; font-family:inherit; color:var(--ink);" />
+          <span style="font-size:12px; color:var(--muted-light);">Ooni Halo Pro spiral mixer: 20&deg;F.</span>
+        </label>
+        <div style="display:flex; justify-content:space-between; align-items:center; background:var(--ink); color:#FBF3E9; border-radius:12px; padding:12px 16px; font-weight:700;">
+          <span>Water Temp Needed</span>
+          <span id="ddtWaterTempOut">--&deg;F</span>
+        </div>
+        <button type="button" class="pill" id="ddtResetBtn" style="width:100%; box-sizing:border-box; justify-content:center;">Clear</button>
+      </div>
+    </div>
+
+    <div class="top-tabs" id="topTabs5">
+      <button type="button" class="top-tab-btn" id="tabBtn_bake_5" data-tab="bake">Bake</button>
+      <button type="button" class="top-tab-btn" id="tabBtn_recipe_5" data-tab="recipe">Recipes</button>
+      <button type="button" class="top-tab-btn" id="tabBtn_testimonials_5" data-tab="testimonials" title="Testimonials">Bread Pictures</button>
+      <button type="button" class="top-tab-btn" id="tabBtn_calculator_5" data-tab="calculator" title="Levain Calculator">Levain Calculator</button>
+    </div>
+    <button type="button" class="top-tab-btn active" id="tabBtn_ddt_5" data-tab="ddt" title="DDT Calculator" style="width:100%; box-sizing:border-box; margin-top:8px;">DDT Desired Dough Temperature</button>
+    <button type="button" id="openSaveBtnDDT" style="display:block; width:100%; text-align:center; font-size:12px; color:var(--muted-light); margin:8px 0 0; cursor:pointer; background:transparent; border:1px solid var(--line); border-radius:999px; padding:8px; font-family:inherit;">&copy; Thor 2026 · Timer v2.1</button>
   </div>
 
   <div id="testimonialLightbox" style="display:none; position:fixed; inset:0; background:rgba(59,47,34,0.6); backdrop-filter:blur(2px); z-index:250; align-items:center; justify-content:center; padding:20px; box-sizing:border-box;">
@@ -1157,7 +1228,7 @@
         { key: "autolyseTemp", label: "Temp", value: "", placeholder: "\u00b0F", pairKey: "autolysePH", logLabel: "Temp" },
         { key: "autolysePH", label: "PH", value: "", placeholder: "e.g. 4.0", logLabel: "PH" },
       ] },
-    { key: "bulk", label: "Bulk Fermentation", icon: "&#128200;", defaultMinutes: 20, folds: true, countUp: true, hint: "Start this timer once all the ingredients are mixed together.", hint2: "This timer will stop automatically at the end of Final % Rise.", ingredients: [
+    { key: "bulk", label: "Bulk Fermentation", icon: "&#128200;", defaultMinutes: 20, folds: true, countUp: true, hint: "Start this timer once all the ingredients are mixed together.", hint2: "This timer will stop automatically at the end of Final Proof.", ingredients: [
         { name: "Levain", qty: "100g" },
         { name: "Salt", qty: "10g" },
         { name: "", qty: "" },
@@ -1168,7 +1239,7 @@
         { key: "bulkTemp", label: "Temp", value: "", placeholder: "\u00b0F", pairKey: "bulkPH", logLabel: "Temp" },
         { key: "bulkPH", label: "PH", value: "", placeholder: "e.g. 4.0", logLabel: "PH" },
       ] },
-    { key: "bulkRise", label: "Final % Rise", icon: "&#127749;", defaultMinutes: 20, hasDone: true, countUp: true, fields: [
+    { key: "bulkRise", label: "Final Proof", icon: "&#127749;", defaultMinutes: 20, hasDone: true, countUp: true, fields: [
         { key: "roomTemp", label: "Room Temperature", value: "", placeholder: "\u00b0F" },
         { key: "doughTemp", label: "Dough Temperature", value: "", placeholder: "\u00b0F" },
         { key: "finalPH", label: "PH", value: "", placeholder: "e.g. 4.0" },
@@ -1189,7 +1260,7 @@
         { key: "preshapeTemp", label: "Temp", value: "", placeholder: "\u00b0F", pairKey: "preshapePH", logLabel: "Temp" },
         { key: "preshapePH", label: "PH", value: "", placeholder: "e.g. 4.0", logLabel: "PH" },
       ] },
-    { key: "bench", label: "Shape Dough & Rest in Basket", icon: "&#10074;&#10074;", defaultMinutes: 20, hasDone: true, hasSkip: true, countUp: true, fields: [
+    { key: "bench", label: "Final Shaping & Rest in Basket", icon: "&#10074;&#10074;", defaultMinutes: 20, hasDone: true, hasSkip: true, countUp: true, fields: [
         { key: "benchTemp", label: "Temp", value: "", placeholder: "\u00b0F", pairKey: "benchPH", logLabel: "Temp" },
         { key: "benchPH", label: "PH", value: "", placeholder: "e.g. 4.0", logLabel: "PH" },
       ] },
@@ -2105,9 +2176,10 @@
       recipe: el("tab-recipe"),
       testimonials: el("tab-testimonials"),
       calculator: el("tab-calculator"),
+      ddt: el("tab-ddt"),
     };
-    const names = ["bake", "recipe", "testimonials", "calculator"];
-    const instances = ["1", "2", "3", "4"];
+    const names = ["bake", "recipe", "testimonials", "calculator", "ddt"];
+    const instances = ["1", "2", "3", "4", "5"];
     const buttons = [];
     instances.forEach((suf) => {
       names.forEach((name) => {
@@ -2123,6 +2195,7 @@
       buttons.forEach((b) => b.btn.classList.toggle("active", b.name === name));
       if (name === "recipe") renderRecipeTab();
       if (name === "testimonials" && typeof renderTestimonialsGrid === "function") renderTestimonialsGrid();
+      window.scrollTo({ top: 0, left: 0, behavior: "auto" });
     }
     buttons.forEach((b) => {
       b.btn.addEventListener("click", () => showTab(b.name));
@@ -2131,6 +2204,8 @@
     if (backBtn) backBtn.addEventListener("click", () => showTab("bake"));
     const recipeBackBtn = el("recipeBackBtn");
     if (recipeBackBtn) recipeBackBtn.addEventListener("click", () => showTab("bake"));
+    const ddtBackBtn = el("ddtBackBtn");
+    if (ddtBackBtn) ddtBackBtn.addEventListener("click", () => showTab("bake"));
     const calculatorBackBtn = el("calculatorBackBtn");
     if (calculatorBackBtn) calculatorBackBtn.addEventListener("click", () => showTab("bake"));
   })();
@@ -3722,6 +3797,50 @@
     calc();
   })();
 
+  // ---------- Desired Dough Temperature (DDT) Calculator ----------
+  // DDT x 4 = X; Flour Temp + Room Temp + Starter Temp + Machine Friction = Y; X - Y = Water Temp
+  (function initDDTCalc() {
+    const targetEl = el("ddtTarget");
+    const flourEl = el("ddtFlourTemp");
+    const roomEl = el("ddtRoomTemp");
+    const starterEl = el("ddtStarterTemp");
+    const frictionEl = el("ddtFriction");
+    const out = el("ddtWaterTempOut");
+    if (!targetEl || !out) return;
+
+    function calc() {
+      const ddt = parseFloat(targetEl.value);
+      const flour = parseFloat(flourEl.value);
+      const room = parseFloat(roomEl.value);
+      const starter = parseFloat(starterEl.value);
+      const friction = parseFloat(frictionEl.value) || 0;
+      if ([ddt, flour, room, starter].some((v) => isNaN(v))) {
+        out.textContent = "Enter values above";
+        return;
+      }
+      const x = ddt * 4;
+      const y = flour + room + starter + friction;
+      const waterTemp = x - y;
+      out.textContent = Math.round(waterTemp) + "\u00b0F";
+    }
+
+    [targetEl, flourEl, roomEl, starterEl, frictionEl].forEach((f) => f.addEventListener("input", calc));
+
+    const resetBtn = el("ddtResetBtn");
+    if (resetBtn) {
+      resetBtn.addEventListener("click", () => {
+        targetEl.value = "0";
+        flourEl.value = "0";
+        roomEl.value = "0";
+        starterEl.value = "0";
+        frictionEl.value = "0";
+        calc();
+      });
+    }
+
+    calc();
+  })();
+
   function getBakeLog() {
     try {
       return JSON.parse(localStorage.getItem("sourdoughBakeLog") || "[]");
@@ -4989,7 +5108,7 @@ async function actionCreatePdfBakeLog() {
       closeHelpPanel();
       return;
     }
-    if (t.id === "openSaveBtn" || t.closest("#openSaveBtn") || t.id === "openSaveBtnRecipe" || t.closest("#openSaveBtnRecipe") || t.id === "openSaveBtnTestimonials" || t.closest("#openSaveBtnTestimonials") || t.id === "openSaveBtnCalculator" || t.closest("#openSaveBtnCalculator")) {
+    if (t.id === "openSaveBtn" || t.closest("#openSaveBtn") || t.id === "openSaveBtnRecipe" || t.closest("#openSaveBtnRecipe") || t.id === "openSaveBtnTestimonials" || t.closest("#openSaveBtnTestimonials") || t.id === "openSaveBtnCalculator" || t.closest("#openSaveBtnCalculator") || t.id === "openSaveBtnDDT" || t.closest("#openSaveBtnDDT")) {
       ev.preventDefault();
       openSavePanel();
       return;
