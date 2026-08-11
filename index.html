@@ -474,21 +474,22 @@
   nav.tabbar {
     position: fixed; left: 50%; transform: translateX(-50%); bottom: 0;
     width: 100%; max-width: 420px;
-    padding: 8px 0 calc(10px + env(safe-area-inset-bottom));
+    padding: 8px 4px calc(10px + env(safe-area-inset-bottom));
     background: rgba(255,255,255,0.92); backdrop-filter: blur(12px);
     border-top: 1px solid var(--line);
-    display: flex; justify-content: space-between; gap: 0;
+    display: flex; justify-content: space-between; gap: 2px;
     z-index: 30; box-sizing: border-box;
     overflow-x: auto;
   }
   .tabbtn {
     display: flex; flex-direction: column; align-items: center; gap: 2px;
     background: none; border: none; color: var(--muted); font-family: inherit;
-    font-size: 11px; font-weight: 700; padding: 5px 0; border-radius: 10px;
-    flex: 1 1 0; min-width: 0; cursor: pointer; white-space: nowrap;
+    font-size: 9.5px; font-weight: 700; padding: 5px 2px; border-radius: 10px;
+    flex: 1 1 0; min-width: 0; max-width: 100%; cursor: pointer;
+    white-space: normal; overflow-wrap: break-word; word-break: break-word;
     transition: background-color .15s ease, color .15s ease;
   }
-  .tabbtn svg { width: 19px; height: 19px; stroke: currentColor; }
+  .tabbtn svg { width: 18px; height: 18px; stroke: currentColor; flex-shrink: 0; }
   .tabbtn.active { color: #2F2F74; background: #DDDAF8; }
   .tabbtn.tab-bake.active { color: #2F2F74; background: #DDDAF8; }
   .tabbtn.tab-calculator.active { color: #3B2F74; background: #DED8F8; }
@@ -497,8 +498,8 @@
   .tabbtn.tab-loafweight.active { color: #642F74; background: #F0D8F8; }
   .tabbtn.tab-bakelog.active { color: #722F74; background: #F7D8F8; }
   .tabbtn.tab-testimonials.active { color: #742F68; background: #F8D8F2; }
-  .tabbtn-2line { line-height: 1.15; text-align: center; }
-  .tabbtn-3line { line-height: 1.1; text-align: center; font-size: 10px; }
+  .tabbtn-2line { line-height: 1.15; text-align: center; display: block; }
+  .tabbtn-3line { line-height: 1.1; text-align: center; font-size: 8.5px; display: block; }
 
   /* ----- mobile button / row alignment ----- */
   .btn-row {
@@ -5599,3 +5600,5 @@ async function actionCreatePdfBakeLog() {
 
 </body>
 </html>
+
+        
