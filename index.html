@@ -65,7 +65,7 @@
   .wrap {
     max-width: 420px;
     margin: 0 auto;
-    padding: 32px 20px 40px;
+    padding: 32px 20px calc(96px + env(safe-area-inset-bottom));
     display: flex;
     flex-direction: column;
     gap: 24px;
@@ -391,6 +391,26 @@
     padding: 0 4px; margin: 0; font-weight: 700;
     display: flex; align-items: center; gap: 6px;
   }
+  .dropbox { border: 1px solid var(--line); border-radius: 16px; background: var(--card); box-shadow: var(--shadow-sm); overflow: hidden; }
+  .dropbox > summary {
+    list-style: none; cursor: pointer; user-select: none;
+    display: flex; align-items: center; justify-content: space-between; gap: 8px;
+    padding: 12px 14px; font-size: 12px; letter-spacing: .1em; text-transform: uppercase;
+    font-weight: 700; color: var(--muted);
+  }
+  .dropbox > summary::-webkit-details-marker { display: none; }
+  .dropbox > summary::marker { content: ""; }
+  .dropbox > summary .dropbox-label { display: flex; align-items: center; gap: 6px; }
+  .dropbox > summary .dropbox-label::before {
+    content: ""; display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--accent);
+  }
+  .dropbox > summary .dropbox-chevron {
+    display: inline-block; transition: transform .15s ease; color: var(--muted-light); font-size: 12px;
+  }
+  .dropbox[open] > summary .dropbox-chevron { transform: rotate(90deg); }
+  .dropbox > summary:hover { color: var(--ink); }
+  .dropbox-body { padding: 0 14px 14px; }
+
   .section-label::before {
     content: ""; display: inline-block; width: 6px; height: 6px; border-radius: 50%;
     background: var(--accent);
@@ -449,6 +469,36 @@
     50% { box-shadow: 0 0 0 4px rgba(224,145,199,0.18); }
   }
   .banner { animation: pulseGlow 2s ease-in-out infinite; }
+
+  /* ---------- fixed bottom taskbar ---------- */
+  nav.tabbar {
+    position: fixed; left: 50%; transform: translateX(-50%); bottom: 0;
+    width: 100%; max-width: 420px;
+    padding: 8px 0 calc(10px + env(safe-area-inset-bottom));
+    background: rgba(255,255,255,0.92); backdrop-filter: blur(12px);
+    border-top: 1px solid var(--line);
+    display: flex; justify-content: space-between; gap: 0;
+    z-index: 30; box-sizing: border-box;
+    overflow-x: auto;
+  }
+  .tabbtn {
+    display: flex; flex-direction: column; align-items: center; gap: 2px;
+    background: none; border: none; color: var(--muted); font-family: inherit;
+    font-size: 11px; font-weight: 700; padding: 5px 0; border-radius: 10px;
+    flex: 1 1 0; min-width: 0; cursor: pointer; white-space: nowrap;
+    transition: background-color .15s ease, color .15s ease;
+  }
+  .tabbtn svg { width: 19px; height: 19px; stroke: currentColor; }
+  .tabbtn.active { color: #2F2F74; background: #DDDAF8; }
+  .tabbtn.tab-bake.active { color: #2F2F74; background: #DDDAF8; }
+  .tabbtn.tab-calculator.active { color: #3B2F74; background: #DED8F8; }
+  .tabbtn.tab-recipe.active { color: #482F74; background: #E4D8F8; }
+  .tabbtn.tab-ddt.active { color: #562F74; background: #EAD8F8; }
+  .tabbtn.tab-loafweight.active { color: #642F74; background: #F0D8F8; }
+  .tabbtn.tab-bakelog.active { color: #722F74; background: #F7D8F8; }
+  .tabbtn.tab-testimonials.active { color: #742F68; background: #F8D8F2; }
+  .tabbtn-2line { line-height: 1.15; text-align: center; }
+  .tabbtn-3line { line-height: 1.1; text-align: center; font-size: 10px; }
 
   /* ----- mobile button / row alignment ----- */
   .btn-row {
@@ -817,35 +867,23 @@
       <div class="phase-list" id="phaseList"></div>
     </div>
 
-    <div>
-      <p class="section-label">Progress</p>
-      <div class="card" id="progressContent" style="gap:0;"></div>
-    </div>
+    <details class="dropbox">
+      <summary><span class="dropbox-label">Progress</span><span class="dropbox-chevron">&#9656;</span></summary>
+      <div class="dropbox-body">
+        <div id="progressContent" style="gap:0; display:flex; flex-direction:column;"></div>
+      </div>
+    </details>
 
-    <div>
-      <p class="section-label">Notes</p>
-      <textarea id="notes" rows="3" placeholder="Observations, adjustments, reminders..."></textarea>
-    </div>
+    <details class="dropbox">
+      <summary><span class="dropbox-label">Notes</span><span class="dropbox-chevron">&#9656;</span></summary>
+      <div class="dropbox-body">
+        <textarea id="notes" rows="3" placeholder="Observations, adjustments, reminders..." style="width:100%; box-sizing:border-box;"></textarea>
+      </div>
+    </details>
 
     <button class="end-btn" id="endBtn"><span class="end-btn-icon">&#127838;</span><span class="end-btn-label">End Session</span></button>
 
     <div style="height:1px; background:var(--line); margin:8px 4px 0;"></div>
-
-    <!-- TOP TAB SWITCHER -->
-    <div style="display:flex; flex-direction:column; gap:8px;">
-    <div class="top-tabs" id="topTabs1">
-      <button type="button" class="top-tab-btn" id="tabBtn_calculator_1" data-tab="calculator" title="Levain Calculator">Levain Calculator</button>
-      <button type="button" class="top-tab-btn" id="tabBtn_recipe_1" data-tab="recipe">Recipes</button>
-    </div>
-    <div style="display:flex; gap:8px;">
-      <button type="button" class="top-tab-btn" id="tabBtn_ddt_1" data-tab="ddt" title="DDT Calculator" style="width:100%; box-sizing:border-box; font-size:13px; letter-spacing:-0.01em; line-height:1.15;">DDT Desired Dough Temperature Calculator</button>
-      <button type="button" class="top-tab-btn" id="tabBtn_loafweight_1" data-tab="loafweight" title="Loaf Weight Calculator" style="width:100%; box-sizing:border-box;">Loaf Weight Calculator</button>
-    </div>
-    <div style="display:flex; gap:8px;">
-      <button type="button" class="top-tab-btn" id="bottomBakeLogBtn_1" data-action="open-bake-log">Bake Log</button>
-      <button type="button" class="top-tab-btn" id="tabBtn_testimonials_1" data-tab="testimonials" title="Testimonials">Bread Pictures</button>
-    </div>
-    </div>
 
     <button type="button" id="openSaveBtn" style="display:block; width:100%; text-align:center; font-size:12px; color:var(--muted-light); margin:2px 0 0; cursor:pointer; background:transparent; border:1px solid var(--line); border-radius:999px; padding:8px; font-family:inherit;">&copy; Thor 2026 · Timer v2.1</button>
   </div>
@@ -874,20 +912,6 @@
       <p class="ingredients-title" style="margin:0 0 6px;">Notes</p>
       <textarea id="recipeNotesInput" placeholder="Anything you want to remember about this recipe&hellip;" style="width:100%; box-sizing:border-box; height:120px; max-height:220px; overflow-y:auto; resize:vertical; border-radius:12px; border:1px solid var(--line-strong); padding:10px 12px; font-size:15px; font-family:inherit; color:var(--ink); line-height:1.4;"></textarea>
     </div>
-    <div style="display:flex; flex-direction:column; gap:8px;">
-    <div class="top-tabs" id="topTabs2">
-      <button type="button" class="top-tab-btn" id="tabBtn_calculator_2" data-tab="calculator" title="Levain Calculator">Levain Calculator</button>
-      <button type="button" class="top-tab-btn active" id="tabBtn_recipe_2" data-tab="recipe">Recipes</button>
-    </div>
-    <div style="display:flex; gap:8px;">
-      <button type="button" class="top-tab-btn" id="tabBtn_ddt_2" data-tab="ddt" title="DDT Calculator" style="width:100%; box-sizing:border-box; font-size:13px; letter-spacing:-0.01em; line-height:1.15;">DDT Desired Dough Temperature Calculator</button>
-      <button type="button" class="top-tab-btn" id="tabBtn_loafweight_2" data-tab="loafweight" title="Loaf Weight Calculator" style="width:100%; box-sizing:border-box;">Loaf Weight Calculator</button>
-    </div>
-    <div style="display:flex; gap:8px;">
-      <button type="button" class="top-tab-btn" id="bottomBakeLogBtn_2" data-action="open-bake-log">Bake Log</button>
-      <button type="button" class="top-tab-btn" id="tabBtn_testimonials_2" data-tab="testimonials" title="Testimonials">Bread Pictures</button>
-    </div>
-    </div>
     <button type="button" id="recipeBackBtnBottom" title="Back to Bake" style="width:40px; height:40px; border-radius:50%; border:1px solid var(--line); background:var(--card); box-shadow:var(--shadow-sm); display:flex; align-items:center; justify-content:center; cursor:pointer; padding:0; margin:12px auto 0;"><span style="display:inline-block; transform:rotate(-90deg); font-size:14px; color:var(--ink);">&#9650;</span></button>
     <button type="button" id="openSaveBtnRecipe" style="display:block; width:100%; text-align:center; font-size:12px; color:var(--muted-light); margin:8px 0 0; cursor:pointer; background:transparent; border:1px solid var(--line); border-radius:999px; padding:8px; font-family:inherit;">&copy; Thor 2026 · Timer v2.1</button>
   </div>
@@ -909,20 +933,6 @@
         Add Photos
         <input type="file" id="testimonialsPhotoInput" accept="image/*" multiple style="display:none;" />
       </label>
-    </div>
-    <div style="display:flex; flex-direction:column; gap:8px;">
-    <div class="top-tabs" id="topTabs3">
-      <button type="button" class="top-tab-btn" id="tabBtn_calculator_3" data-tab="calculator" title="Levain Calculator">Levain Calculator</button>
-      <button type="button" class="top-tab-btn" id="tabBtn_recipe_3" data-tab="recipe">Recipes</button>
-    </div>
-    <div style="display:flex; gap:8px;">
-      <button type="button" class="top-tab-btn" id="tabBtn_ddt_3" data-tab="ddt" title="DDT Calculator" style="width:100%; box-sizing:border-box; font-size:13px; letter-spacing:-0.01em; line-height:1.15;">DDT Desired Dough Temperature Calculator</button>
-      <button type="button" class="top-tab-btn" id="tabBtn_loafweight_3" data-tab="loafweight" title="Loaf Weight Calculator" style="width:100%; box-sizing:border-box;">Loaf Weight Calculator</button>
-    </div>
-    <div style="display:flex; gap:8px;">
-      <button type="button" class="top-tab-btn" id="bottomBakeLogBtn_3" data-action="open-bake-log">Bake Log</button>
-      <button type="button" class="top-tab-btn active" id="tabBtn_testimonials_3" data-tab="testimonials" title="Testimonials">Bread Pictures</button>
-    </div>
     </div>
     <button type="button" id="testimonialsBackBtnBottom" title="Back to Bake" style="width:40px; height:40px; border-radius:50%; border:1px solid var(--line); background:var(--card); box-shadow:var(--shadow-sm); display:flex; align-items:center; justify-content:center; cursor:pointer; padding:0; margin:12px auto 0;"><span style="display:inline-block; transform:rotate(-90deg); font-size:14px; color:var(--ink);">&#9650;</span></button>
     <button type="button" id="openSaveBtnTestimonials" style="display:block; width:100%; text-align:center; font-size:12px; color:var(--muted-light); margin:8px 0 0; cursor:pointer; background:transparent; border:1px solid var(--line); border-radius:999px; padding:8px; font-family:inherit;">&copy; Thor 2026 · Timer v2.1</button>
@@ -1034,20 +1044,6 @@
 
     <button type="button" class="pill solid" id="levainCalcApplyBtn" style="width:100%; box-sizing:border-box; justify-content:center;">Use these amounts for Levain</button>
 
-    <div style="display:flex; flex-direction:column; gap:8px;">
-    <div class="top-tabs" id="topTabs4">
-      <button type="button" class="top-tab-btn active" id="tabBtn_calculator_4" data-tab="calculator" title="Levain Calculator">Levain Calculator</button>
-      <button type="button" class="top-tab-btn" id="tabBtn_recipe_4" data-tab="recipe">Recipes</button>
-    </div>
-    <div style="display:flex; gap:8px;">
-      <button type="button" class="top-tab-btn" id="tabBtn_ddt_4" data-tab="ddt" title="DDT Calculator" style="width:100%; box-sizing:border-box; font-size:13px; letter-spacing:-0.01em; line-height:1.15;">DDT Desired Dough Temperature Calculator</button>
-      <button type="button" class="top-tab-btn" id="tabBtn_loafweight_4" data-tab="loafweight" title="Loaf Weight Calculator" style="width:100%; box-sizing:border-box;">Loaf Weight Calculator</button>
-    </div>
-    <div style="display:flex; gap:8px;">
-      <button type="button" class="top-tab-btn" id="bottomBakeLogBtn_4" data-action="open-bake-log">Bake Log</button>
-      <button type="button" class="top-tab-btn" id="tabBtn_testimonials_4" data-tab="testimonials" title="Testimonials">Bread Pictures</button>
-    </div>
-    </div>
     <button type="button" id="calculatorBackBtnBottom" title="Back to Bake" style="width:40px; height:40px; border-radius:50%; border:1px solid var(--line); background:var(--card); box-shadow:var(--shadow-sm); display:flex; align-items:center; justify-content:center; cursor:pointer; padding:0; margin:12px auto 0;"><span style="display:inline-block; transform:rotate(-90deg); font-size:14px; color:var(--ink);">&#9650;</span></button>
     <button type="button" id="openSaveBtnCalculator" style="display:block; width:100%; text-align:center; font-size:12px; color:var(--muted-light); margin:8px 0 0; cursor:pointer; background:transparent; border:1px solid var(--line); border-radius:999px; padding:8px; font-family:inherit;">&copy; Thor 2026 · Timer v2.1</button>
   </div>
@@ -1055,7 +1051,7 @@
   <!-- DDT CALCULATOR TAB -->
   <div class="tab-panel" id="tab-ddt">
     <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:12px;">
-      <h1 class="serif">DDT Calculator</h1>
+      <h1 class="serif">DDT Desired Dough Calculator</h1>
       <button type="button" id="ddtBackBtn" title="Back" style="width:40px; height:40px; border-radius:50%; border:1px solid var(--line); background:var(--card); box-shadow:var(--shadow-sm); display:flex; align-items:center; justify-content:center; cursor:pointer; padding:0; flex-shrink:0;">
         <span style="display:inline-block; transform:rotate(-90deg); font-size:14px; color:var(--ink);">&#9650;</span>
       </button>
@@ -1095,20 +1091,6 @@
       </div>
     </div>
 
-    <div style="display:flex; flex-direction:column; gap:8px;">
-    <div class="top-tabs" id="topTabs5">
-      <button type="button" class="top-tab-btn" id="tabBtn_calculator_5" data-tab="calculator" title="Levain Calculator">Levain Calculator</button>
-      <button type="button" class="top-tab-btn" id="tabBtn_recipe_5" data-tab="recipe">Recipes</button>
-    </div>
-    <div style="display:flex; gap:8px;">
-      <button type="button" class="top-tab-btn active" id="tabBtn_ddt_5" data-tab="ddt" title="DDT Calculator" style="width:100%; box-sizing:border-box; font-size:13px; letter-spacing:-0.01em; line-height:1.15;">DDT Desired Dough Temperature Calculator</button>
-      <button type="button" class="top-tab-btn" id="tabBtn_loafweight_5" data-tab="loafweight" title="Loaf Weight Calculator" style="width:100%; box-sizing:border-box;">Loaf Weight Calculator</button>
-    </div>
-    <div style="display:flex; gap:8px;">
-      <button type="button" class="top-tab-btn" id="bottomBakeLogBtn_5" data-action="open-bake-log">Bake Log</button>
-      <button type="button" class="top-tab-btn" id="tabBtn_testimonials_5" data-tab="testimonials" title="Testimonials">Bread Pictures</button>
-    </div>
-    </div>
     <button type="button" id="ddtBackBtnBottom" title="Back to Bake" style="width:40px; height:40px; border-radius:50%; border:1px solid var(--line); background:var(--card); box-shadow:var(--shadow-sm); display:flex; align-items:center; justify-content:center; cursor:pointer; padding:0; margin:12px auto 0;"><span style="display:inline-block; transform:rotate(-90deg); font-size:14px; color:var(--ink);">&#9650;</span></button>
     <button type="button" id="openSaveBtnDDT" style="display:block; width:100%; text-align:center; font-size:12px; color:var(--muted-light); margin:8px 0 0; cursor:pointer; background:transparent; border:1px solid var(--line); border-radius:999px; padding:8px; font-family:inherit;">&copy; Thor 2026 · Timer v2.1</button>
   </div>
@@ -1146,26 +1128,44 @@
       </div>
       <div id="loafCalcRows"></div>
       <button type="button" class="stepper-btn" id="loafCalcAddBtn" title="Add ingredient">&#43;</button>
-      <button type="button" class="pill" id="loafCalcResetNewBtn" style="width:100%; box-sizing:border-box; justify-content:center; margin-top:10px;">Reset New Weight</button>
+      <button type="button" class="pill solid" id="loafCalcApplyBtn" style="width:100%; box-sizing:border-box; justify-content:center; margin-top:10px;">Use these amounts for the recipe</button>
+      <button type="button" class="pill" id="loafCalcResetNewBtn" style="width:100%; box-sizing:border-box; justify-content:center; margin-top:10px;">Clear</button>
     </div>
 
-    <div style="display:flex; flex-direction:column; gap:8px;">
-    <div class="top-tabs" id="topTabs6">
-      <button type="button" class="top-tab-btn" id="tabBtn_calculator_6" data-tab="calculator" title="Levain Calculator">Levain Calculator</button>
-      <button type="button" class="top-tab-btn" id="tabBtn_recipe_6" data-tab="recipe">Recipes</button>
-    </div>
-    <div style="display:flex; gap:8px;">
-      <button type="button" class="top-tab-btn" id="tabBtn_ddt_6" data-tab="ddt" title="DDT Calculator" style="width:100%; box-sizing:border-box; font-size:13px; letter-spacing:-0.01em; line-height:1.15;">DDT Desired Dough Temperature Calculator</button>
-      <button type="button" class="top-tab-btn active" id="tabBtn_loafweight_6" data-tab="loafweight" title="Loaf Weight Calculator" style="width:100%; box-sizing:border-box;">Loaf Weight Calculator</button>
-    </div>
-    <div style="display:flex; gap:8px;">
-      <button type="button" class="top-tab-btn" id="bottomBakeLogBtn_6" data-action="open-bake-log">Bake Log</button>
-      <button type="button" class="top-tab-btn" id="tabBtn_testimonials_6" data-tab="testimonials" title="Testimonials">Bread Pictures</button>
-    </div>
-    </div>
     <button type="button" id="loafWeightBackBtnBottom" title="Back to Bake" style="width:40px; height:40px; border-radius:50%; border:1px solid var(--line); background:var(--card); box-shadow:var(--shadow-sm); display:flex; align-items:center; justify-content:center; cursor:pointer; padding:0; margin:12px auto 0;"><span style="display:inline-block; transform:rotate(-90deg); font-size:14px; color:var(--ink);">&#9650;</span></button>
     <button type="button" id="openSaveBtnLoafWeight" style="display:block; width:100%; text-align:center; font-size:12px; color:var(--muted-light); margin:8px 0 0; cursor:pointer; background:transparent; border:1px solid var(--line); border-radius:999px; padding:8px; font-family:inherit;">&copy; Thor 2026 · Timer v2.1</button>
   </div>
+
+  <nav class="tabbar">
+    <button type="button" class="tabbtn tab-bake active" id="tabBtn_bake_7" data-tab="bake">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-8 9 8"></path><path d="M5 10v10a1 1 0 0 0 1 1h4v-6h4v6h4a1 1 0 0 0 1-1V10"></path></svg>
+      Home
+    </button>
+    <button type="button" class="tabbtn tab-recipe" id="tabBtn_recipe_7" data-tab="recipe">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 4.5A2 2 0 0 1 7 3h11v16H7a2 2 0 0 0-2 2V4.5Z"></path><path d="M8 3v16"></path></svg>
+      Recipes
+    </button>
+    <button type="button" class="tabbtn tab-calculator" id="tabBtn_calculator_7" data-tab="calculator">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 2h6M10 2v6.5l-5.5 9A1.7 1.7 0 0 0 6 20h12a1.7 1.7 0 0 0 1.5-2.5L14 8.5V2"></path><path d="M7.5 14h9"></path></svg>
+      <span class="tabbtn-3line">Starter<br>&amp; Levain<br>Calculator</span>
+    </button>
+    <button type="button" class="tabbtn tab-loafweight" id="tabBtn_loafweight_7" data-tab="loafweight">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v18"></path><path d="M5 7h14"></path><path d="M5 7 3 12.5a2.5 2.5 0 0 0 5 0L6 7Z"></path><path d="M18 7l-2 5.5a2.5 2.5 0 0 0 5 0L19 7Z"></path></svg>
+      <span class="tabbtn-3line">Loaf<br>Weight<br>Calculator</span>
+    </button>
+    <button type="button" class="tabbtn tab-ddt" id="tabBtn_ddt_7" data-tab="ddt">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a2 2 0 0 0-2 2v8.6a4 4 0 1 0 4 0V5a2 2 0 0 0-2-2Z"></path><path d="M12 9v4.6"></path></svg>
+      <span class="tabbtn-3line">Desired<br>Dough<br>Temperature</span>
+    </button>
+    <button type="button" class="tabbtn tab-testimonials" id="tabBtn_testimonials_7" data-tab="testimonials">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"></rect><circle cx="9" cy="11" r="2"></circle><path d="M21 16l-5-5-4 4-3-3-4 4"></path></svg>
+      <span class="tabbtn-2line">Bread<br>Pictures</span>
+    </button>
+    <button type="button" class="tabbtn tab-bakelog" id="bottomBakeLogBtn_7" data-action="open-bake-log">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="17" rx="2"></rect><path d="M8 2v4M16 2v4M4 9h16"></path></svg>
+      <span class="tabbtn-2line">Bake<br>Log</span>
+    </button>
+  </nav>
 
   <div id="testimonialLightbox" style="display:none; position:fixed; inset:0; background:rgba(59,47,34,0.6); backdrop-filter:blur(2px); z-index:250; align-items:center; justify-content:center; padding:20px; box-sizing:border-box;">
     <div class="card" style="width:100%; max-width:420px; box-shadow: var(--shadow-lg); align-items:center;">
@@ -2274,7 +2274,7 @@
       loafweight: el("tab-loafweight"),
     };
     const names = ["bake", "recipe", "testimonials", "calculator", "ddt", "loafweight"];
-    const instances = ["1", "2", "3", "4", "5", "6"];
+    const instances = ["1", "2", "3", "4", "5", "6", "7"];
     const buttons = [];
     instances.forEach((suf) => {
       names.forEach((name) => {
@@ -3982,7 +3982,7 @@
       { name: "Flour #1", qty: "250g" },
       { name: "Flour #2", qty: "250g" },
       { name: "Water", qty: "350g" },
-      { name: "Starter", qty: "100g" },
+      { name: "Levain", qty: "100g" },
       { name: "Salt", qty: "10g" },
     ];
   } else {
@@ -3996,6 +3996,8 @@
         { name: "Flour #2", qty: half }
       );
     }
+    const starterIdx = loafCalcIngredients.findIndex((ing) => /^starter$/i.test((ing.name || "").trim()));
+    if (starterIdx > -1) loafCalcIngredients[starterIdx].name = "Levain";
   }
 
   function saveLoafCalcIngredients() {
@@ -4119,6 +4121,45 @@
         // ingredient list (names/weights) is never touched by this.
         if (newTotalEl) newTotalEl.value = "";
         calcLoafWeight();
+      });
+    }
+    const applyBtn = el("loafCalcApplyBtn");
+    if (applyBtn) {
+      applyBtn.addEventListener("click", () => {
+        const currentTotal = loafCalcIngredients.reduce((sum, ing) => sum + parseGramsLoose(ing.qty), 0);
+        const newTotal = parseFloat(newTotalEl ? newTotalEl.value : "");
+        const ratio = (newTotal && newTotal > 0 && currentTotal > 0) ? newTotal / currentTotal : 1;
+
+        const sumMatching = (regex) => loafCalcIngredients
+          .filter((ing) => regex.test((ing.name || "").trim()))
+          .reduce((sum, ing) => sum + parseGramsLoose(ing.qty), 0);
+
+        const flourG = Math.round(sumMatching(/flour/i) * ratio);
+        const waterG = Math.round(sumMatching(/^water$/i) * ratio);
+        const starterG = Math.round(sumMatching(/starter|levain/i) * ratio);
+        const saltG = Math.round(sumMatching(/salt/i) * ratio);
+
+        const autolysePhase = phases.find((p) => p.key === "autolyse");
+        if (autolysePhase && autolysePhase.ingredients) {
+          autolysePhase.ingredients.forEach((ing) => {
+            if (ing.name === "Flour") ing.qty = flourG + "g";
+            if (ing.name === "Water") ing.qty = waterG + "g";
+          });
+        }
+        const bulkPhase = phases.find((p) => p.key === "bulk");
+        if (bulkPhase && bulkPhase.ingredients) {
+          bulkPhase.ingredients.forEach((ing) => {
+            if (ing.name === "Levain") ing.qty = starterG + "g";
+            if (ing.name === "Salt") ing.qty = saltG + "g";
+          });
+        }
+
+        sessionStarted = true;
+        snapshotSession();
+        render();
+        const original = applyBtn.textContent;
+        applyBtn.textContent = "Added to Recipe ✓";
+        setTimeout(() => { applyBtn.textContent = original; }, 1200);
       });
     }
     renderLoafCalc();
