@@ -492,8 +492,8 @@
   .tabbtn svg { width: 18px; height: 18px; stroke: currentColor; flex-shrink: 0; }
   #tabBtn_recipe_7 { margin-left: -4px; }
   #bottomBakeLogBtn_7 { margin-left: -4px; }
-  #tabBtn_ddt_7 { margin-left: -5px; }
-  #tabBtn_testimonials_7 { margin-left: -5px; }
+  #tabBtn_ddt_7 { margin-left: -8px; padding-left: 0; padding-right: 0; }
+  #tabBtn_testimonials_7 { margin-left: -8px; }
   .tabbtn.active { color: #2F2F74; background: #DDDAF8; }
   .tabbtn.tab-bake.active { color: #2F2F74; background: #DDDAF8; }
   .tabbtn.tab-calculator.active { color: #3B2F74; background: #DED8F8; }
@@ -925,7 +925,7 @@
   <div class="tab-panel" id="tab-testimonials">
     <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:12px;">
       <div>
-        <h1 class="serif">Testimonials</h1>
+        <h1 class="serif">Bread Pictures</h1>
         <p class="subtitle" style="margin:8px 0 0;">Photos of your bread, all in one place. Tap a photo to edit or delete it.</p>
       </div>
       <button type="button" id="testimonialsBackBtn" title="Back" style="width:40px; height:40px; border-radius:50%; border:1px solid var(--line); background:var(--card); box-shadow:var(--shadow-sm); display:flex; align-items:center; justify-content:center; cursor:pointer; padding:0; flex-shrink:0;">
@@ -1160,7 +1160,7 @@
     </button>
     <button type="button" class="tabbtn tab-ddt" id="tabBtn_ddt_7" data-tab="ddt">
       <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a2 2 0 0 0-2 2v8.6a4 4 0 1 0 4 0V5a2 2 0 0 0-2-2Z"></path><path d="M12 9v4.6"></path></svg>
-      <span class="tabbtn-3line">Desired<br>Dough<br>Temperature</span>
+      <span class="tabbtn-3line" style="font-size:7.5px; letter-spacing:-0.2px;">Desired<br>Dough<br>Temperature</span>
     </button>
     <button type="button" class="tabbtn tab-testimonials" id="tabBtn_testimonials_7" data-tab="testimonials">
       <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"></rect><circle cx="9" cy="11" r="2"></circle><path d="M21 16l-5-5-4 4-3-3-4 4"></path></svg>
