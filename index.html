@@ -493,21 +493,6 @@
   .tabbtn-icon { width: 30px; height: 30px; border-radius: 9px; background: #F3E8D8; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
   .tabbtn-icon svg { width: 20px; height: 20px; }
 
-  .zoom-control {
-    position: fixed; top: calc(8px + env(safe-area-inset-top)); right: 8px; z-index: 60;
-    display: flex; align-items: center; gap: 4px;
-    background: rgba(255,255,255,0.92); backdrop-filter: blur(8px);
-    border: 1px solid var(--line); border-radius: 999px;
-    padding: 4px 6px; box-shadow: var(--shadow-sm);
-  }
-  .zoom-btn {
-    width: 26px; height: 26px; border-radius: 50%; border: none;
-    background: var(--accent-tint); color: var(--ink);
-    font-size: 15px; font-weight: 700; line-height: 1;
-    display: flex; align-items: center; justify-content: center; cursor: pointer;
-  }
-  .zoom-btn:active { background: var(--accent); color: #fff; }
-  .zoom-label { font-size: 11px; font-weight: 700; color: var(--muted); min-width: 30px; text-align: center; }
   #tabBtn_recipe_7 { margin-left: -4px; }
   #bottomBakeLogBtn_7 { margin-left: -7px; }
   #tabBtn_ddt_7 { margin-left: -4px; }
@@ -793,12 +778,6 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
 </head>
 <body>
-
-<div class="zoom-control" id="zoomControl">
-  <button type="button" class="zoom-btn" id="zoomOutBtn" aria-label="Zoom out">&#8722;</button>
-  <span class="zoom-label" id="zoomLabel">100%</span>
-  <button type="button" class="zoom-btn" id="zoomInBtn" aria-label="Zoom in">&#43;</button>
-</div>
 
 <div id="lockScreen" style="display:none; position:fixed; inset:0; z-index:500; align-items:center; justify-content:center; padding:20px; box-sizing:border-box; background-image:var(--hero-bg); background-size:cover; background-position:center;">
   <div style="position:absolute; inset:0; background:rgba(40,25,45,0.55); backdrop-filter:blur(1px);"></div>
@@ -1186,7 +1165,7 @@
     </button>
     <button type="button" class="tabbtn tab-ddt" id="tabBtn_ddt_7" data-tab="ddt">
       <span class="tabbtn-icon"><svg viewBox="0 0 24 24"><path d="M10 3h4v10.5a4 4 0 1 1-4 0Z" fill="#F5C4B3"/><rect x="11" y="6" width="2" height="8" rx="1" fill="#D85A30"/><circle cx="12" cy="17" r="2.6" fill="#D85A30"/><ellipse cx="10.8" cy="6.5" rx="0.9" ry="1.8" fill="#fff" opacity="0.3"/></svg></span>
-      DDT
+      <span class="tabbtn-3line">Desired<br>Dough<br>Calculator</span>
     </button>
     <button type="button" class="tabbtn tab-testimonials" id="tabBtn_testimonials_7" data-tab="testimonials">
       <span class="tabbtn-icon"><svg viewBox="0 0 24 24"><path d="M9 4h6l1.2 2H21a1 1 0 0 1 1 1v11a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h4.8Z" fill="#85B7EB"/><circle cx="12" cy="13" r="4" fill="#378ADD"/><circle cx="12" cy="13" r="2.2" fill="#E6F1FB"/><ellipse cx="18" cy="8.5" rx="1.4" ry="0.9" fill="#fff" opacity="0.4"/></svg></span>
@@ -5627,39 +5606,6 @@ async function actionCreatePdfBakeLog() {
     <button type="button" class="save-close" id="saveCloseBtn" onclick="window.closeSavePanel && window.closeSavePanel();">Close</button>
   </div>
 </div>
-
-<script>
-(function () {
-  var steps = [90, 100, 110, 125, 150, 175, 200];
-  var wrap = document.querySelector('.wrap');
-  var label = document.getElementById('zoomLabel');
-  var inBtn = document.getElementById('zoomInBtn');
-  var outBtn = document.getElementById('zoomOutBtn');
-  if (!wrap || !label || !inBtn || !outBtn) return;
-
-  var stored = parseInt(localStorage.getItem('appZoomLevel'), 10);
-  var idx = steps.indexOf(stored);
-  if (idx === -1) idx = steps.indexOf(100);
-
-  function apply() {
-    var val = steps[idx];
-    wrap.style.zoom = val / 100;
-    label.textContent = val + '%';
-    outBtn.disabled = idx === 0;
-    inBtn.disabled = idx === steps.length - 1;
-    try { localStorage.setItem('appZoomLevel', val); } catch (e) {}
-  }
-
-  inBtn.addEventListener('click', function () {
-    if (idx < steps.length - 1) { idx++; apply(); }
-  });
-  outBtn.addEventListener('click', function () {
-    if (idx > 0) { idx--; apply(); }
-  });
-
-  apply();
-})();
-</script>
 
 </body>
 </html>
