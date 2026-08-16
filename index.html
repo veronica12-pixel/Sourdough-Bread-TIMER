@@ -4061,6 +4061,20 @@
         const field = e.target.getAttribute("data-field");
         loafCalcIngredients[idx][field] = e.target.value;
         calcLoafWeight();
+
+        // Live-sync a Levain quantity change to the Levain ingredient shown
+        // in the Bulk Fermentation phase on the Home tab.
+        if (field === "qty") {
+          const ing = loafCalcIngredients[idx];
+          if (ing && /^levain$/i.test((ing.name || "").trim())) {
+            const bulkPhase = phases.find((p) => p.key === "bulk");
+            const bulkLevain = bulkPhase && bulkPhase.ingredients && bulkPhase.ingredients.find((it) => it.name === "Levain");
+            if (bulkLevain) {
+              bulkLevain.qty = e.target.value;
+              render();
+            }
+          }
+        }
       });
     });
     updateLoafCalcLiveValues();
