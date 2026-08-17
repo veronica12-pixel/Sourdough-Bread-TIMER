@@ -4178,6 +4178,19 @@
           });
         }
 
+        // Also scale the Levain phase's own build ingredients (starter,
+        // water, flour) by the same ratio, so the amount you're told to
+        // build stays consistent with the new "Levain" amount used above.
+        const levainPhase = phases.find((p) => p.key === "levain");
+        if (levainPhase && levainPhase.ingredients) {
+          levainPhase.ingredients.forEach((ing) => {
+            const w = parseGramsLoose(ing.qty);
+            if (ing.name && w > 0) {
+              ing.qty = Math.round(w * ratio) + "g";
+            }
+          });
+        }
+
         sessionStarted = true;
         snapshotSession();
         render();
