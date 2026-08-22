@@ -1540,6 +1540,8 @@
     });
     loafMultiplier = newMultiplier;
     render();
+    sessionStarted = true;
+    snapshotSession();
   }
 
   function computeLoafWeight() {
