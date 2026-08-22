@@ -842,16 +842,6 @@
   <div class="tab-panel active" id="tab-bake">
     <div>
       <h1 class="serif" id="pageTitle">Bake</h1>
-      <div id="resumeBanner" style="display:none; position:fixed; inset:0; background:rgba(59,47,34,0.5); backdrop-filter:blur(2px); z-index:300; align-items:center; justify-content:center; padding:20px; box-sizing:border-box;">
-        <div class="card" style="width:100%; max-width:420px; box-shadow: var(--shadow-lg); text-align:center; align-items:center;">
-          <p style="margin:0; font-size:20px; font-weight:700; color:var(--accent-dark);">Resume bake in progress?</p>
-          <p style="margin:0; font-size:14px; color:var(--muted);">You have a bake session that hasn't finished yet.</p>
-          <div style="display:flex; gap:10px; flex-wrap:wrap; width:100%; margin-top:4px;">
-            <button type="button" class="pill solid" id="resumeBakeBtn" style="flex:1;">Resume</button>
-            <button type="button" class="pill" id="discardResumeBtn" style="flex:1;">Start fresh</button>
-          </div>
-        </div>
-      </div>
       <div id="recipeQtyRow" style="display:flex; flex-direction:column; flex-wrap:nowrap; align-items:flex-start; gap:8px; margin:4px 0; width:100%; max-width:100%; box-sizing:border-box;">
         <div style="position:relative; flex:0 0 auto; min-width:0; max-width:100%; display:flex; align-items:center; gap:8px;">
           <button type="button" id="recipeSelectBtn" style="display:inline-flex; align-items:center; gap:6px; font-size:16px; font-weight:700; color:var(--ink); background:var(--accent-tint); border:1px solid var(--accent); border-radius:999px; padding:10px 14px; font-family:inherit; cursor:pointer; max-width:100%; width:auto; box-sizing:border-box;">
@@ -4920,47 +4910,17 @@
   }
 
   // ----- session resume on load -----
+  // Whatever was in progress is restored automatically, with no prompt and
+  // no time limit. Nothing here ever clears saved data — the only thing
+  // that does is tapping "End Session" and then Save/Discard on the recap
+  // screen (see resetSessionAfterRecap()).
   pendingResume = loadSavedSession();
   if (pendingResume) {
-    const hasRealProgress = (Array.isArray(pendingResume.phases) && pendingResume.phases.some((p) => p.completed))
-      || (Array.isArray(pendingResume.foldLog) && pendingResume.foldLog.length > 0)
-      || !!pendingResume.foldsCompleted
-      || (typeof pendingResume.notes === "string" && pendingResume.notes.trim().length > 0);
-    if (pendingResume.sessionStarted && hasRealProgress) {
-      const ageH = (Date.now() - (pendingResume.savedAt || 0)) / 3600000;
-      if (ageH < 36) {
-        const banner = el("resumeBanner");
-        if (banner) banner.style.display = "flex";
-      } else {
-        clearSavedSession();
-        pendingResume = null;
-      }
-    } else {
-      // Saved state with no real progress (e.g. a field was tapped but nothing
-      // was actually done yet) — clear it quietly instead of prompting.
-      clearSavedSession();
-      pendingResume = null;
-    }
-  }
-  const resumeBtn = el("resumeBakeBtn");
-  const discardResumeBtn = el("discardResumeBtn");
-  if (resumeBtn) {
-    resumeBtn.addEventListener("click", () => {
-      if (pendingResume) applySession(pendingResume);
-      pendingResume = null;
-      const banner = el("resumeBanner");
-      if (banner) banner.style.display = "none";
+    if (pendingResume.sessionStarted) {
+      applySession(pendingResume);
       if (typeof updateYieldNote === "function") updateYieldNote();
-      render();
-    });
-  }
-  if (discardResumeBtn) {
-    discardResumeBtn.addEventListener("click", () => {
-      clearSavedSession();
-      pendingResume = null;
-      const banner = el("resumeBanner");
-      if (banner) banner.style.display = "none";
-    });
+    }
+    pendingResume = null;
   }
 
   // Export / import recipes
