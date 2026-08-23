@@ -1629,6 +1629,37 @@
     return minutes + "m";
   }
 
+  // Parses a hand-typed duration back into seconds, for correcting a
+  // mis-recorded time on a saved Bake Log entry. Accepts "2h 15m", "2h",
+  // "45m", "1:30:00" / "45:00", or a bare number (treated as minutes).
+  // Returns null if the text doesn't look like a duration, so a bad edit
+  // never silently wipes out the existing value.
+  function parseDurationToSeconds(str) {
+    if (str == null) return null;
+    const s = String(str).trim();
+    if (!s) return null;
+    if (/^\d{1,3}:\d{1,2}(:\d{1,2})?$/.test(s)) {
+      const parts = s.split(":").map(Number);
+      if (parts.length === 3) return parts[0] * 3600 + parts[1] * 60 + parts[2];
+      return parts[0] * 60 + parts[1];
+    }
+    const re = /(\d+(?:\.\d+)?)\s*(h|hr|hrs|hour|hours|m|min|mins|minute|minutes|s|sec|secs|second|seconds)\b/gi;
+    let total = 0;
+    let matched = false;
+    let m;
+    while ((m = re.exec(s)) !== null) {
+      matched = true;
+      const val = parseFloat(m[1]);
+      const unit = m[2].toLowerCase();
+      if (unit[0] === "h") total += val * 3600;
+      else if (unit[0] === "m") total += val * 60;
+      else total += val;
+    }
+    if (matched) return Math.round(total);
+    if (/^\d+(\.\d+)?$/.test(s)) return Math.round(parseFloat(s) * 60);
+    return null;
+  }
+
   // ---------- shared 24h time-input helpers (start/end time boxes) ----------
   function maskTime24Input(e) {
     let digits = e.target.value.replace(/\D/g, "").slice(0, 4);
@@ -4290,10 +4321,6 @@
       recipeName: recipeName,
       photos: recapPhotos.slice(),
       totalSeconds: totalSeconds,
-      // Grace window: for 48 hours after ending the session you can come back
-      // and add photos of the finished loaf, or edit the recipe name/notes on
-      // this log entry.
-      editDeadline: now.getTime() + 48 * 60 * 60 * 1000,
       phases: phaseSummaries,
       folds: foldSummary,
       notes: notesVal,
@@ -4306,14 +4333,6 @@
     } catch (e) {
       alert("Couldn't save this bake — your photo library may be full. Try removing a photo or two.");
     }
-  }
-
-  // Best-effort deadline lookup that also honors log entries saved by the
-  // older build of this file, which used the field name "photoDeadline".
-  function getBakeLogEditDeadline(record) {
-    if (typeof record.editDeadline === "number") return record.editDeadline;
-    if (typeof record.photoDeadline === "number") return record.photoDeadline;
-    return null;
   }
 
   function buildBakeTimeSummary(log) {
@@ -4347,12 +4366,8 @@
     }
     const comparisonChartHtml = buildBakeComparisonChart(log);
     const timeSummaryHtml = buildBakeTimeSummary(log);
-    const nowTs = Date.now();
     content.innerHTML = timeSummaryHtml + comparisonChartHtml + log.map((record) => {
-      const deadline = getBakeLogEditDeadline(record);
-      const msLeft = typeof deadline === "number" ? deadline - nowTs : -1;
-      const withinEditWindow = msLeft > 0;
-      const isEditing = withinEditWindow && bakeLogEditingId === record.id;
+      const isEditing = bakeLogEditingId === record.id;
 
       const photosHtml = (record.photos && record.photos.length > 0)
         ? `<div style="display:flex; gap:8px; overflow-x:auto; padding-bottom:4px;">
@@ -4365,21 +4380,24 @@
           </div>`
         : "";
 
-      const editControlsHtml = withinEditWindow
-        ? (isEditing
-            ? `<div style="display:flex; gap:8px; flex-wrap:wrap;">
-                 <button data-add-bakelog-photo="${record.id}" style="border:1px dashed var(--line-strong); background:var(--card); color:var(--ink); font-size:12.5px; font-weight:600; cursor:pointer; padding:7px 12px; border-radius:12px; font-family:inherit;">+ Add photo</button>
-                 <button data-save-bakelog-edit="${record.id}" style="border:none; background:var(--accent, #5a9a78); color:#fff; font-size:12.5px; font-weight:700; cursor:pointer; padding:7px 14px; border-radius:12px; font-family:inherit;">Save changes</button>
-                 <button data-cancel-bakelog-edit="${record.id}" style="border:none; background:none; color:var(--muted-light); font-size:12.5px; cursor:pointer; padding:7px 4px;">Cancel</button>
-               </div>`
-            : `<button data-edit-bakelog="${record.id}" style="align-self:flex-start; border:1px solid var(--line-strong); background:var(--card); color:var(--ink); font-size:12px; font-weight:600; cursor:pointer; padding:6px 12px; border-radius:999px; font-family:inherit;">
-                 Edit &middot; ${Math.max(1, Math.ceil(msLeft / 3600000))}h left
-               </button>`)
-        : "";
+      const editControlsHtml = isEditing
+        ? `<div style="display:flex; gap:8px; flex-wrap:wrap;">
+             <button data-add-bakelog-photo="${record.id}" style="border:1px dashed var(--line-strong); background:var(--card); color:var(--ink); font-size:12.5px; font-weight:600; cursor:pointer; padding:7px 12px; border-radius:12px; font-family:inherit;">+ Add photo</button>
+             <button data-save-bakelog-edit="${record.id}" style="border:none; background:var(--accent, #5a9a78); color:#fff; font-size:12.5px; font-weight:700; cursor:pointer; padding:7px 14px; border-radius:12px; font-family:inherit;">Save changes</button>
+             <button data-cancel-bakelog-edit="${record.id}" style="border:none; background:none; color:var(--muted-light); font-size:12.5px; cursor:pointer; padding:7px 4px;">Cancel</button>
+           </div>`
+        : `<button data-edit-bakelog="${record.id}" style="align-self:flex-start; border:1px solid var(--line-strong); background:var(--card); color:var(--ink); font-size:12px; font-weight:600; cursor:pointer; padding:6px 12px; border-radius:999px; font-family:inherit;">
+             Edit
+           </button>`;
 
-      const phasesHtml = record.phases.map((p) => `
+      const phasesHtml = record.phases.map((p, i) => `
         <div style="padding:6px 0; border-bottom:1px solid var(--line);">
-          <p style="margin:0; font-weight:700; font-size:14px; color:var(--ink);">${p.label}</p>
+          <div style="display:flex; align-items:baseline; justify-content:space-between; gap:8px;">
+            <p style="margin:0; font-weight:700; font-size:14px; color:var(--ink);">${p.label}</p>
+            ${isEditing
+              ? `<input data-edit-phase-duration="${record.id}:${i}" value="${escapeHtml(typeof p.elapsedSeconds === "number" && p.elapsedSeconds > 0 ? formatDurationCompact(p.elapsedSeconds) : "")}" placeholder="e.g. 2h 15m" style="width:96px; flex-shrink:0; font-family:inherit; font-size:12.5px; color:var(--ink); border:1px solid var(--line-strong); border-radius:8px; padding:4px 7px; text-align:right; background:var(--bg, #fff);" />`
+              : (typeof p.elapsedSeconds === "number" && p.elapsedSeconds > 0 ? `<span style="font-size:12.5px; color:var(--muted); flex-shrink:0;">${formatDurationCompact(p.elapsedSeconds)}</span>` : "")}
+          </div>
           <p style="margin:1px 0 0; font-size:13px; color:var(--muted);">${p.note}</p>
           ${p.ingredients && p.ingredients.length ? `<p style="margin:2px 0 0; font-size:12px; color:var(--muted);">${p.ingredients.join(" &middot; ")}</p>` : ""}
         </div>
@@ -4396,7 +4414,10 @@
       const headerHtml = isEditing
         ? `<div style="min-width:0; flex:1;">
              <input data-edit-recipe-name="${record.id}" value="${escapeHtml(record.recipeName)}" style="font-family:inherit; font-size:19px; font-weight:700; color:var(--ink); border:1px solid var(--line-strong); border-radius:8px; padding:5px 8px; width:100%; box-sizing:border-box; background:var(--bg, #fff);" />
-             <p style="margin:4px 0 0; font-size:13px; color:var(--muted);">${record.dateLabel}${typeof record.totalSeconds === "number" ? " &middot; " + formatDurationWords(record.totalSeconds) + " total" : ""}</p>
+             <div style="display:flex; align-items:center; gap:6px; margin-top:6px;">
+               <span style="font-size:13px; color:var(--muted);">${record.dateLabel} &middot; total:</span>
+               <input data-edit-total-duration="${record.id}" value="${escapeHtml(typeof record.totalSeconds === "number" && record.totalSeconds > 0 ? formatDurationCompact(record.totalSeconds) : "")}" placeholder="e.g. 18h 30m" style="width:110px; font-family:inherit; font-size:13px; color:var(--ink); border:1px solid var(--line-strong); border-radius:8px; padding:4px 7px; background:var(--bg, #fff);" />
+             </div>
            </div>`
         : `<div style="min-width:0; flex:1;">
              <p class="serif" style="margin:0; font-size:20px;">${escapeHtml(record.recipeName)}</p>
@@ -4427,6 +4448,7 @@
           ${photosHtml}
           ${editControlsHtml}
           ${(() => {
+            if (isEditing) return ""; // editable durations are shown inline per phase below instead
             const items = (record.phases || [])
               .map((p) => ({ label: p.label, seconds: typeof p.elapsedSeconds === "number" ? p.elapsedSeconds : 0 }))
               .filter((x) => x.seconds > 0);
@@ -4475,8 +4497,22 @@
         if (record) {
           const nameInput = content.querySelector(`[data-edit-recipe-name="${id}"]`);
           const notesInput = content.querySelector(`[data-edit-notes="${id}"]`);
+          const totalInput = content.querySelector(`[data-edit-total-duration="${id}"]`);
           if (nameInput) record.recipeName = nameInput.value.trim() || record.recipeName;
           if (notesInput) record.notes = notesInput.value.trim();
+          if (totalInput) {
+            const parsedTotal = parseDurationToSeconds(totalInput.value);
+            // Only overwrite when the text actually parses as a duration —
+            // an empty or unrecognized entry leaves the existing value alone
+            // rather than silently clearing it.
+            if (parsedTotal !== null) record.totalSeconds = parsedTotal;
+          }
+          (record.phases || []).forEach((p, i) => {
+            const phaseInput = content.querySelector(`[data-edit-phase-duration="${id}:${i}"]`);
+            if (!phaseInput) return;
+            const parsed = parseDurationToSeconds(phaseInput.value);
+            if (parsed !== null) p.elapsedSeconds = parsed;
+          });
           try {
             localStorage.setItem("sourdoughBakeLog", JSON.stringify(freshLog));
           } catch (e) {
@@ -4515,8 +4551,7 @@
           const files = Array.from(e.target.files || []);
           const freshLog = getBakeLog();
           const record = freshLog.find((r) => r.id === id);
-          const deadline = record ? getBakeLogEditDeadline(record) : null;
-          if (record && typeof deadline === "number" && Date.now() < deadline) {
+          if (record) {
             let failed = false;
             for (const file of files) {
               try {
