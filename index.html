@@ -1507,6 +1507,11 @@
   let loafMultiplier = 1;
   let bakersPercentPanelOpen = false;
   let sessionStarted = false;
+  // Wall-clock timestamp of the moment this bake session actually began
+  // (first field touched, first timer started, etc.) — used to show total
+  // time from Levain to the final bake in the Bake Log, since it can span
+  // more than one calendar day (overnight cold proof, etc.).
+  let sessionStartedAt = null;
 
   function parseWeight(qty) {
     const n = parseFloat(qty);
@@ -1540,7 +1545,7 @@
     });
     loafMultiplier = newMultiplier;
     render();
-    sessionStarted = true;
+    sessionStarted = true; if (!sessionStartedAt) sessionStartedAt = Date.now();
     snapshotSession();
   }
 
@@ -1751,6 +1756,15 @@
   // ---------- render ----------
 
   const el = (id) => document.getElementById(id);
+  // Shared HTML-escaping helper (some code below already called this
+  // assuming it existed globally; make that true).
+  function escapeHtml(s) {
+    return String(s == null ? "" : s)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
+  }
 
 
   const SESSION_KEY = "sourdoughActiveSession_v2";
@@ -1767,6 +1781,7 @@
         recipeName,
         notes,
         sessionStarted,
+        sessionStartedAt,
         foldsCompleted,
         foldsDoneNote,
         foldsTemp,
@@ -1827,6 +1842,7 @@
   function applySession(data) {
     if (!data || !data.phases) return;
     sessionStarted = !!data.sessionStarted;
+    sessionStartedAt = typeof data.sessionStartedAt === "number" ? data.sessionStartedAt : null;
     foldsCompleted = !!data.foldsCompleted;
     foldsDoneNote = data.foldsDoneNote || "";
     foldsTemp = data.foldsTemp || "";
@@ -2511,7 +2527,7 @@
       startTimeInput.addEventListener("blur", (e) => {
         commitTime24Input(e, (val) => {
           p.startTime = val;
-          sessionStarted = true;
+          sessionStarted = true; if (!sessionStartedAt) sessionStartedAt = Date.now();
           if (p.key === "bulk" && val) {
             const levain = phases.find((ph) => ph.key === "levain");
             if (levain) {
@@ -2558,7 +2574,7 @@
       endTimeInput.addEventListener("blur", (e) => {
         commitTime24Input(e, (val) => {
           p.endTime = val;
-          sessionStarted = true;
+          sessionStarted = true; if (!sessionStartedAt) sessionStartedAt = Date.now();
           if (val) {
             const idx = phases.indexOf(p);
             const next = idx > -1 ? phases[idx + 1] : null;
@@ -2608,7 +2624,7 @@
           const key = e.target.getAttribute("data-field-key");
           const field = p.fields.find((f) => f.key === key);
           if (field) field.value = e.target.value;
-          sessionStarted = true;
+          sessionStarted = true; if (!sessionStartedAt) sessionStartedAt = Date.now();
           snapshotSession();
 
           if (key === "doughTemp") {
@@ -2693,7 +2709,7 @@
         } : null,
       };
 
-      sessionStarted = true;
+      sessionStarted = true; if (!sessionStartedAt) sessionStartedAt = Date.now();
       const now = Date.now();
       p.completed = true;
       p.completedAt = now;
@@ -2835,7 +2851,7 @@
         const field = e.target.getAttribute("data-field");
         items[idx][field] = e.target.value;
         if (e.target.tagName === "TEXTAREA") autoGrowName(e.target);
-        sessionStarted = true;
+        sessionStarted = true; if (!sessionStartedAt) sessionStartedAt = Date.now();
         snapshotSession();
         if (onChange) onChange();
       });
@@ -3003,8 +3019,8 @@
       </div>
     `;
 
-    el("foldsTempInput").addEventListener("input", (e) => { foldsTemp = e.target.value; sessionStarted = true; snapshotSession(); });
-    el("foldsPHInput").addEventListener("input", (e) => { foldsPH = e.target.value; sessionStarted = true; snapshotSession(); });
+    el("foldsTempInput").addEventListener("input", (e) => { foldsTemp = e.target.value; sessionStarted = true; if (!sessionStartedAt) sessionStartedAt = Date.now(); snapshotSession(); });
+    el("foldsPHInput").addEventListener("input", (e) => { foldsPH = e.target.value; sessionStarted = true; if (!sessionStartedAt) sessionStartedAt = Date.now(); snapshotSession(); });
 
     function refreshFoldTimerUI() {
       const startInput = el("foldCard") ? el("foldCard").querySelector('[data-role="foldStartTimeInput"]') : null;
@@ -3034,7 +3050,7 @@
       inputEl.addEventListener("blur", (e) => {
         commitTime24Input(e, (val) => {
           foldsStartTime = val;
-          sessionStarted = true;
+          sessionStarted = true; if (!sessionStartedAt) sessionStartedAt = Date.now();
           refreshFoldTimerUI();
           if (sessionStarted) snapshotSession();
         });
@@ -3049,7 +3065,7 @@
       inputEl.addEventListener("blur", (e) => {
         commitTime24Input(e, (val) => {
           foldsEndTime = val;
-          sessionStarted = true;
+          sessionStarted = true; if (!sessionStartedAt) sessionStartedAt = Date.now();
           if (val) {
             const rise = phases.find((ph) => ph.key === "bulkRise");
             if (rise && !rise.startTime) rise.startTime = val;
@@ -3080,7 +3096,7 @@
       const prevFoldsPanelOpen = foldsPanelOpen;
 
       foldsCompleted = true;
-      sessionStarted = true;
+      sessionStarted = true; if (!sessionStartedAt) sessionStartedAt = Date.now();
       alertUser("Folds are done", "Tap to review your stretch & folds.");
       const totalStretch = foldState.stretch.count;
       const totalCoil = foldState.coil.count;
@@ -3109,7 +3125,7 @@
         const key = btn.getAttribute("data-log");
         const state = foldState[key];
         const group = FOLD_GROUPS.find((g) => g.key === key);
-        sessionStarted = true;
+        sessionStarted = true; if (!sessionStartedAt) sessionStartedAt = Date.now();
 
         const prevCount = state.count;
         const prevFoldsStartTime = foldsStartTime;
@@ -3263,29 +3279,29 @@
   }
 
   function buildPhaseTimeChart(items) {
-    // items: [{ label, seconds }]
+    // items: [{ label, seconds }] — rendered as horizontal bars (label above
+    // each bar, duration on the right), stacked top to bottom.
     const data = (items || []).filter((it) => it.seconds > 0);
     if (!data.length) return "";
     const maxSec = Math.max(...data.map((d) => d.seconds), 1);
     const colors = ["#E091C7", "#7EB8A8", "#F0A36B", "#8BA3D9", "#D4A5C9", "#A8C686", "#E8B86D", "#9BB7D4"];
-    const bars = data.map((d, i) => {
-      // taller min so rotated name fits inside the bar
-      const h = Math.max(56, Math.round((d.seconds / maxSec) * 140));
-      const label = d.label;
+    const rows = data.map((d, i) => {
+      const pct = Math.max(4, Math.round((d.seconds / maxSec) * 100));
       const timeLabel = formatClock(d.seconds);
       const color = colors[i % colors.length];
-      return `<div style="display:flex; flex-direction:column; align-items:center; justify-content:flex-end; flex:1; min-width:44px; max-width:72px; height:180px;">
-        <span style="font-size:10px; color:var(--muted); margin-bottom:4px; font-variant-numeric:tabular-nums;">${timeLabel}</span>
-        <div style="position:relative; width:78%; max-width:42px; height:${h}px; background:${color}; border-radius:10px 10px 6px 6px; display:flex; align-items:center; justify-content:center; overflow:hidden;">
-          <span style="position:absolute; left:50%; top:50%; transform:translate(-50%, -50%) rotate(-90deg); white-space:nowrap; font-size:11px; font-weight:700; color:#fff; text-shadow:0 1px 2px rgba(0,0,0,0.25); letter-spacing:0.02em; max-width:${Math.max(48, h - 12)}px; overflow:hidden; text-overflow:ellipsis;">${label}</span>
+      return `<div style="margin-bottom:10px;">
+        <div style="display:flex; align-items:baseline; justify-content:space-between; gap:8px; margin-bottom:4px;">
+          <span style="font-size:12.5px; font-weight:700; color:var(--ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${d.label}</span>
+          <span style="font-size:11.5px; color:var(--muted); font-variant-numeric:tabular-nums; flex-shrink:0;">${timeLabel}</span>
+        </div>
+        <div style="width:100%; height:14px; border-radius:999px; background:#EDE1F5; overflow:hidden;">
+          <div style="width:${pct}%; height:100%; border-radius:999px; background:${color};"></div>
         </div>
       </div>`;
     }).join("");
     return `<div style="padding:12px 0 8px; border-bottom:1px solid var(--line);">
       <p style="margin:0 0 10px; font-weight:700; color:var(--ink);">Time by step</p>
-      <div style="display:flex; align-items:flex-end; justify-content:space-around; gap:6px; overflow-x:auto; padding:0 2px 4px;">
-        ${bars}
-      </div>
+      <div>${rows}</div>
     </div>`;
   }
 
@@ -3446,6 +3462,10 @@
   // ---------- photos & bake log ----------
 
   let recapPhotos = [];
+  // id of the Bake Log entry currently open for editing (recipe name / notes /
+  // photos), or null if none. Only entries still inside their 48-hour edit
+  // window can be opened this way.
+  let bakeLogEditingId = null;
 
   // Reads the EXIF "DateTimeOriginal" (when the photo was actually taken) out of
   // a JPEG's binary header. Returns a timestamp (ms) or null if unavailable
@@ -3913,7 +3933,7 @@
           if (ing.name === "Water for Levain") ing.qty = applyBtn.dataset.water + "g";
           if (ing.name === "Flour for Levain") ing.qty = applyBtn.dataset.flour + "g";
         });
-        sessionStarted = true;
+        sessionStarted = true; if (!sessionStartedAt) sessionStartedAt = Date.now();
         snapshotSession();
         render();
         const original = applyBtn.textContent;
@@ -4183,7 +4203,7 @@
           });
         }
 
-        sessionStarted = true;
+        sessionStarted = true; if (!sessionStartedAt) sessionStartedAt = Date.now();
         snapshotSession();
         render();
         const original = applyBtn.textContent;
@@ -4257,12 +4277,23 @@
       }),
     } : null;
 
+    // Total wall-clock time from the moment the session actually began
+    // (first field touched / first timer started, i.e. around Levain) to
+    // right now (ending the session) — this can span more than a day since
+    // it includes things like an overnight cold proof.
+    const totalSeconds = typeof sessionStartedAt === "number" ? Math.max(0, Math.round((now.getTime() - sessionStartedAt) / 1000)) : null;
+
     const record = {
       id: Date.now(),
       date: now.toISOString(),
       dateLabel: now.toLocaleDateString([], { month: "short", day: "numeric", year: "numeric" }),
       recipeName: recipeName,
       photos: recapPhotos.slice(),
+      totalSeconds: totalSeconds,
+      // Grace window: for 48 hours after ending the session you can come back
+      // and add photos of the finished loaf, or edit the recipe name/notes on
+      // this log entry.
+      editDeadline: now.getTime() + 48 * 60 * 60 * 1000,
       phases: phaseSummaries,
       folds: foldSummary,
       notes: notesVal,
@@ -4277,6 +4308,36 @@
     }
   }
 
+  // Best-effort deadline lookup that also honors log entries saved by the
+  // older build of this file, which used the field name "photoDeadline".
+  function getBakeLogEditDeadline(record) {
+    if (typeof record.editDeadline === "number") return record.editDeadline;
+    if (typeof record.photoDeadline === "number") return record.photoDeadline;
+    return null;
+  }
+
+  function buildBakeTimeSummary(log) {
+    const rows = log.filter((r) => typeof r.totalSeconds === "number" && r.totalSeconds > 0);
+    if (rows.length === 0) return "";
+    return `
+      <div class="card" style="padding:16px; gap:8px; box-shadow: var(--shadow-sm);">
+        <p class="serif" style="margin:0 0 4px; font-size:19px;">Levain to Loaf &mdash; Total Time</p>
+        <p style="margin:0 0 6px; font-size:12.5px; color:var(--muted);">How long each bake took from start (Levain) to when the session was ended, fridge time included.</p>
+        <div>
+          ${rows.map((r) => `
+            <div style="display:flex; align-items:baseline; justify-content:space-between; gap:10px; padding:7px 0; border-bottom:1px solid var(--line);">
+              <div style="min-width:0;">
+                <p style="margin:0; font-size:14px; font-weight:700; color:var(--ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${escapeHtml(r.recipeName)}</p>
+                <p style="margin:1px 0 0; font-size:12px; color:var(--muted-light);">${r.dateLabel}</p>
+              </div>
+              <p style="margin:0; font-size:14px; font-weight:700; color:var(--ink); flex-shrink:0;">${formatDurationWords(r.totalSeconds)}</p>
+            </div>
+          `).join("")}
+        </div>
+      </div>
+    `;
+  }
+
   function renderBakeLog() {
     const log = getBakeLog();
     const content = el("bakeLogContent");
@@ -4285,12 +4346,37 @@
       return;
     }
     const comparisonChartHtml = buildBakeComparisonChart(log);
-    content.innerHTML = comparisonChartHtml + log.map((record) => {
+    const timeSummaryHtml = buildBakeTimeSummary(log);
+    const nowTs = Date.now();
+    content.innerHTML = timeSummaryHtml + comparisonChartHtml + log.map((record) => {
+      const deadline = getBakeLogEditDeadline(record);
+      const msLeft = typeof deadline === "number" ? deadline - nowTs : -1;
+      const withinEditWindow = msLeft > 0;
+      const isEditing = withinEditWindow && bakeLogEditingId === record.id;
+
       const photosHtml = (record.photos && record.photos.length > 0)
         ? `<div style="display:flex; gap:8px; overflow-x:auto; padding-bottom:4px;">
-            ${record.photos.map((src) => `<img src="${src}" style="width:96px; height:96px; object-fit:cover; border-radius:14px; flex-shrink:0;" />`).join("")}
+            ${record.photos.map((src, i) => `
+              <div style="position:relative; flex-shrink:0;">
+                <img src="${src}" style="width:96px; height:96px; object-fit:cover; border-radius:14px; display:block;" />
+                ${isEditing ? `<button data-remove-bakelog-photo="${record.id}:${i}" title="Delete photo" style="position:absolute; top:4px; right:4px; width:22px; height:22px; border-radius:50%; border:none; background:rgba(59,47,34,0.65); color:#fff; font-size:11px; cursor:pointer; line-height:1; display:flex; align-items:center; justify-content:center;">&#10005;</button>` : ""}
+              </div>
+            `).join("")}
           </div>`
         : "";
+
+      const editControlsHtml = withinEditWindow
+        ? (isEditing
+            ? `<div style="display:flex; gap:8px; flex-wrap:wrap;">
+                 <button data-add-bakelog-photo="${record.id}" style="border:1px dashed var(--line-strong); background:var(--card); color:var(--ink); font-size:12.5px; font-weight:600; cursor:pointer; padding:7px 12px; border-radius:12px; font-family:inherit;">+ Add photo</button>
+                 <button data-save-bakelog-edit="${record.id}" style="border:none; background:var(--accent, #5a9a78); color:#fff; font-size:12.5px; font-weight:700; cursor:pointer; padding:7px 14px; border-radius:12px; font-family:inherit;">Save changes</button>
+                 <button data-cancel-bakelog-edit="${record.id}" style="border:none; background:none; color:var(--muted-light); font-size:12.5px; cursor:pointer; padding:7px 4px;">Cancel</button>
+               </div>`
+            : `<button data-edit-bakelog="${record.id}" style="align-self:flex-start; border:1px solid var(--line-strong); background:var(--card); color:var(--ink); font-size:12px; font-weight:600; cursor:pointer; padding:6px 12px; border-radius:999px; font-family:inherit;">
+                 Edit &middot; ${Math.max(1, Math.ceil(msLeft / 3600000))}h left
+               </button>`)
+        : "";
+
       const phasesHtml = record.phases.map((p) => `
         <div style="padding:6px 0; border-bottom:1px solid var(--line);">
           <p style="margin:0; font-weight:700; font-size:14px; color:var(--ink);">${p.label}</p>
@@ -4306,25 +4392,40 @@
           ${record.folds.inclusions && record.folds.inclusions.length ? `<p style="margin:2px 0 0; font-size:12px; color:var(--muted);">${record.folds.inclusions.map(escapeHtml).join(" &middot; ")}</p>` : ""}
         </div>
       ` : "";
-      const notesHtml = record.notes ? `
+
+      const headerHtml = isEditing
+        ? `<div style="min-width:0; flex:1;">
+             <input data-edit-recipe-name="${record.id}" value="${escapeHtml(record.recipeName)}" style="font-family:inherit; font-size:19px; font-weight:700; color:var(--ink); border:1px solid var(--line-strong); border-radius:8px; padding:5px 8px; width:100%; box-sizing:border-box; background:var(--bg, #fff);" />
+             <p style="margin:4px 0 0; font-size:13px; color:var(--muted);">${record.dateLabel}${typeof record.totalSeconds === "number" ? " &middot; " + formatDurationWords(record.totalSeconds) + " total" : ""}</p>
+           </div>`
+        : `<div style="min-width:0; flex:1;">
+             <p class="serif" style="margin:0; font-size:20px;">${escapeHtml(record.recipeName)}</p>
+             <p style="margin:2px 0 0; font-size:13px; color:var(--muted);">${record.dateLabel}${typeof record.totalSeconds === "number" ? " &middot; " + formatDurationWords(record.totalSeconds) + " total" : ""}</p>
+           </div>`;
+
+      const notesHtml = isEditing
+        ? `<div style="padding:6px 0;">
+             <p style="margin:0 0 4px; font-weight:700; font-size:14px; color:var(--ink);">Notes</p>
+             <textarea data-edit-notes="${record.id}" rows="3" style="width:100%; box-sizing:border-box; font-family:inherit; font-size:13px; color:var(--ink); border:1px solid var(--line-strong); border-radius:10px; padding:8px; resize:vertical;">${escapeHtml(record.notes || "")}</textarea>
+           </div>`
+        : (record.notes ? `
         <div style="padding:6px 0;">
           <p style="margin:0; font-weight:700; font-size:14px; color:var(--ink);">Notes</p>
-          <p style="margin:1px 0 0; font-size:13px; color:var(--muted); white-space:pre-wrap;">${record.notes}</p>
+          <p style="margin:1px 0 0; font-size:13px; color:var(--muted); white-space:pre-wrap;">${escapeHtml(record.notes)}</p>
         </div>
-      ` : "";
+      ` : "");
+
       return `
-        <div class="card" style="padding:16px; gap:10px; box-shadow: var(--shadow-sm);">
-          <div style="display:flex; align-items:center; justify-content:space-between; gap:8px;">
-            <div style="min-width:0; flex:1;">
-              <p class="serif" style="margin:0; font-size:20px;">${record.recipeName}</p>
-              <p style="margin:2px 0 0; font-size:13px; color:var(--muted);">${record.dateLabel}</p>
-            </div>
+        <div class="card" data-bakelog-card="${record.id}" style="padding:16px; gap:10px; box-shadow: var(--shadow-sm);">
+          <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:8px;">
+            ${headerHtml}
             <div style="display:flex; align-items:center; gap:10px; flex-shrink:0;">
               <button data-print-bake="${record.id}" style="border:1px solid var(--line-strong); background:var(--card); color:var(--ink); font-size:12px; font-weight:600; cursor:pointer; padding:6px 10px; border-radius:999px; font-family:inherit;">Print PDF</button>
               <button data-delete-bake="${record.id}" style="border:none; background:none; color:var(--muted-light); font-size:13px; cursor:pointer;">Delete</button>
             </div>
           </div>
           ${photosHtml}
+          ${editControlsHtml}
           ${(() => {
             const items = (record.phases || [])
               .map((p) => ({ label: p.label, seconds: typeof p.elapsedSeconds === "number" ? p.elapsedSeconds : 0 }))
@@ -4335,6 +4436,7 @@
         </div>
       `;
     }).join("");
+
     content.querySelectorAll("[data-delete-bake]").forEach((btn) => {
       btn.addEventListener("click", () => {
         const id = parseInt(btn.getAttribute("data-delete-bake"), 10);
@@ -4342,6 +4444,7 @@
         try {
           localStorage.setItem("sourdoughBakeLog", JSON.stringify(filtered));
         } catch (e) {}
+        if (bakeLogEditingId === id) bakeLogEditingId = null;
         renderBakeLog();
       });
     });
@@ -4350,6 +4453,92 @@
         const id = parseInt(btn.getAttribute("data-print-bake"), 10);
         const record = getBakeLog().find((r) => r.id === id);
         if (record) printBakeRecordAsPdf(record);
+      });
+    });
+    content.querySelectorAll("[data-edit-bakelog]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        bakeLogEditingId = parseInt(btn.getAttribute("data-edit-bakelog"), 10);
+        renderBakeLog();
+      });
+    });
+    content.querySelectorAll("[data-cancel-bakelog-edit]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        bakeLogEditingId = null;
+        renderBakeLog();
+      });
+    });
+    content.querySelectorAll("[data-save-bakelog-edit]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const id = parseInt(btn.getAttribute("data-save-bakelog-edit"), 10);
+        const freshLog = getBakeLog();
+        const record = freshLog.find((r) => r.id === id);
+        if (record) {
+          const nameInput = content.querySelector(`[data-edit-recipe-name="${id}"]`);
+          const notesInput = content.querySelector(`[data-edit-notes="${id}"]`);
+          if (nameInput) record.recipeName = nameInput.value.trim() || record.recipeName;
+          if (notesInput) record.notes = notesInput.value.trim();
+          try {
+            localStorage.setItem("sourdoughBakeLog", JSON.stringify(freshLog));
+          } catch (e) {
+            alert("Couldn't save your changes — your photo library may be full.");
+          }
+        }
+        bakeLogEditingId = null;
+        renderBakeLog();
+      });
+    });
+    content.querySelectorAll("[data-remove-bakelog-photo]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const [idStr, idxStr] = btn.getAttribute("data-remove-bakelog-photo").split(":");
+        const id = parseInt(idStr, 10);
+        const idx = parseInt(idxStr, 10);
+        const freshLog = getBakeLog();
+        const record = freshLog.find((r) => r.id === id);
+        if (record && record.photos && idx > -1 && idx < record.photos.length) {
+          record.photos.splice(idx, 1);
+          try {
+            localStorage.setItem("sourdoughBakeLog", JSON.stringify(freshLog));
+          } catch (e) {}
+        }
+        renderBakeLog();
+      });
+    });
+    content.querySelectorAll("[data-add-bakelog-photo]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const id = parseInt(btn.getAttribute("data-add-bakelog-photo"), 10);
+        const input = document.createElement("input");
+        input.type = "file";
+        input.accept = "image/*";
+        input.multiple = true;
+        input.style.display = "none";
+        input.addEventListener("change", async (e) => {
+          const files = Array.from(e.target.files || []);
+          const freshLog = getBakeLog();
+          const record = freshLog.find((r) => r.id === id);
+          const deadline = record ? getBakeLogEditDeadline(record) : null;
+          if (record && typeof deadline === "number" && Date.now() < deadline) {
+            let failed = false;
+            for (const file of files) {
+              try {
+                const dataUrl = await resizeImage(file, 900, 0.72);
+                record.photos = record.photos || [];
+                record.photos.push(dataUrl);
+              } catch (err) {}
+            }
+            try {
+              localStorage.setItem("sourdoughBakeLog", JSON.stringify(freshLog));
+            } catch (err) {
+              failed = true;
+            }
+            renderBakeLog();
+            if (failed) {
+              alert("Couldn't save this photo — your photo library may be full. Try removing a photo or two.");
+            }
+          }
+          document.body.removeChild(input);
+        });
+        document.body.appendChild(input);
+        input.click();
       });
     });
   }
@@ -4873,6 +5062,7 @@
     bakersPercentPanelOpen = false;
     loafMultiplier = 1;
     sessionStarted = false;
+    sessionStartedAt = null;
     recapPhotos = [];
     el("notes").value = "";
     const _recap = el("recapOverlay");
@@ -4976,7 +5166,7 @@
 
   // notes change → session save (on every keystroke, not just blur, so nothing is lost if the device sleeps mid-typing)
   if (el("notes")) {
-    el("notes").addEventListener("input", () => { sessionStarted = true; snapshotSession(); });
+    el("notes").addEventListener("input", () => { sessionStarted = true; if (!sessionStartedAt) sessionStartedAt = Date.now(); snapshotSession(); });
   }
 
 
@@ -5522,7 +5712,7 @@ async function actionCreatePdfBakeLog() {
       <p style="margin:0 0 8px; color:var(--muted);">On Levain, Autolyse, and Bulk you can type which flour you used, plus Temp and PH for that stage. On Levain, you can also note which starter you used. Pre-Shape, Bench Rest, and Cold Proof each have their own Temp and PH fields too. All of these notes are saved with the bake.</p>
 
       <p style="margin:14px 0 4px; font-weight:700;">6. Progress &amp; chart</p>
-      <p style="margin:0 0 8px; color:var(--muted);">Completed steps appear under <strong>Progress</strong>. A vertical bar chart shows how long each step took.</p>
+      <p style="margin:0 0 8px; color:var(--muted);">Completed steps appear under <strong>Progress</strong>. A horizontal bar chart shows how long each step took.</p>
 
       <p style="margin:14px 0 4px; font-weight:700;">7. Bake</p>
       <p style="margin:0 0 8px; color:var(--muted);">Bread-style bakes use <strong>Score</strong>, then <strong>Covered Bake</strong> and <strong>Uncovered Bake</strong>. With a Dutch oven, Covered is lid on; Uncovered is lid off. Pizza and Focaccia use one timed bake with their preset temperature and minutes.</p>
