@@ -5473,12 +5473,65 @@
     o.style.display = "none";
   }
 
+  // Rough estimate of how much of the browser's localStorage quota this
+  // app is using, and a way to purge a stuck/bloated local copy on just
+  // this device and pull a fresh one from the cloud — for cases like a
+  // device silently failing to save a big incoming photo sync (some
+  // mobile browsers allow far less storage than a desktop one), which
+  // otherwise just looks like "my photos vanished" with no way to tell why.
+  function computeStorageUsageBytes() {
+    let total = 0;
+    try {
+      for (let i = 0; i < localStorage.length; i++) {
+        const k = localStorage.key(i);
+        if (k && isSyncKey(k)) total += (localStorage.getItem(k) || "").length;
+      }
+    } catch (e) {}
+    return total;
+  }
+
+  function updateStorageUsageDisplay() {
+    const el2 = document.getElementById("storageUsageText");
+    if (!el2) return;
+    const bytes = computeStorageUsageBytes();
+    const mb = bytes / (1024 * 1024);
+    el2.textContent = mb < 0.1
+      ? Math.round(bytes / 1024) + " KB used on this device."
+      : mb.toFixed(2) + " MB used on this device. Browsers typically allow 5–10 MB, sometimes less on mobile.";
+  }
+
+  async function actionRefreshFromCloud() {
+    const ok = confirm("This clears the bread data saved on THIS device only and re-downloads the latest synced copy. Make sure another device is online with the data you want first. Continue?");
+    if (!ok) return;
+    syncApplyingRemote = true;
+    try {
+      for (let i = localStorage.length - 1; i >= 0; i--) {
+        const k = localStorage.key(i);
+        if (k && isSyncKey(k) && k !== "sourdoughSyncLastApplied") {
+          try { localStorage.removeItem(k); } catch (e) {}
+        }
+      }
+      try { localStorage.removeItem("sourdoughSyncLastApplied"); } catch (e) {}
+    } finally {
+      syncApplyingRemote = false;
+    }
+    updateStorageUsageDisplay();
+    syncSetStatus("connecting");
+    if (syncRef) {
+      syncRef.off();
+      syncReceivedFirst = false;
+    }
+    initFirebaseSync();
+    alert("Cleared. Waiting for the latest synced copy to arrive — leave this open for a few seconds.");
+  }
+
   function openSavePanel() {
     const o = document.getElementById("saveOverlay");
     if (!o) { alert("Save panel missing — reload the file."); return; }
     o.classList.add("open");
     o.style.display = "flex";
     o.setAttribute("aria-hidden", "false");
+    updateStorageUsageDisplay();
   }
 
   function closeSavePanel() {
@@ -5729,6 +5782,11 @@ async function actionCreatePdfBakeLog() {
       actionImportData();
       return;
     }
+    if (t.id === "refreshFromCloudBtn" || t.closest("#refreshFromCloudBtn")) {
+      ev.preventDefault();
+      actionRefreshFromCloud();
+      return;
+    }
     if (t.id === "saveReadOnlyBtn" || t.closest("#saveReadOnlyBtn")) {
       ev.preventDefault();
       actionShareReadOnly();
@@ -5835,6 +5893,15 @@ async function actionCreatePdfBakeLog() {
         <button type="button" class="save-btn outline" id="saveImportDataBtn">Import data</button>
       </div>
       <input type="file" id="saveImportFileInput" accept="application/json,.json" style="display:none;" />
+    </div>
+
+    <div class="save-card">
+      <h3>Storage on this device</h3>
+      <p id="storageUsageText" style="font-size:13px; color:var(--muted); margin:0 0 8px;">Checking…</p>
+      <p style="font-size:12px; color:var(--muted-light); margin:0 0 8px;">If photos are missing here but look fine on another device, or you're getting "not enough room" errors, this clears what's saved on this device only and re-downloads the latest synced copy.</p>
+      <div class="save-actions">
+        <button type="button" class="save-btn outline" id="refreshFromCloudBtn">Refresh from cloud</button>
+      </div>
     </div>
 
     <div class="save-card">
