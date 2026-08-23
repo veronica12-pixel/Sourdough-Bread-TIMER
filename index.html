@@ -1502,6 +1502,7 @@
   let foldsPH = "";
   let foldsStartTime = "";
   let foldsEndTime = "";
+  let foldsTimerStartedAt = null;
   let bakePanelOpen = false;
   let loafWeightPanelOpen = false;
   let loafMultiplier = 1;
@@ -1831,6 +1832,7 @@
         foldsPH,
         foldsStartTime,
         foldsEndTime,
+        foldsTimerStartedAt,
         loafMultiplier,
         foldLog: foldLog.map((f) => ({
           key: f.key,
@@ -1846,6 +1848,7 @@
           doneNote: p.doneNote,
           startTime: p.startTime || "",
           endTime: p.endTime || "",
+          timerStartedAt: p.timerStartedAt || null,
           open: false,
           showDoneBanner: false,
           ingredients: p.ingredients ? p.ingredients.map((i) => ({ ...i })) : undefined,
@@ -1892,6 +1895,7 @@
     foldsPH = data.foldsPH || "";
     foldsStartTime = data.foldsStartTime || "";
     foldsEndTime = data.foldsEndTime || "";
+    foldsTimerStartedAt = typeof data.foldsTimerStartedAt === "number" ? data.foldsTimerStartedAt : null;
     loafMultiplier = typeof data.loafMultiplier === "number" ? data.loafMultiplier : 1;
     foldLog = Array.isArray(data.foldLog) ? data.foldLog.map((f) => ({
       key: f.key,
@@ -1912,6 +1916,7 @@
       p.doneNote = sp.doneNote || "";
       p.startTime = sp.startTime || "";
       p.endTime = sp.endTime || "";
+      p.timerStartedAt = typeof sp.timerStartedAt === "number" ? sp.timerStartedAt : null;
       p.open = false;
       p.showDoneBanner = false;
       if (sp.ingredients) p.ingredients = sp.ingredients.map((i) => ({ ...i }));
@@ -2435,6 +2440,10 @@
     const durationSeconds = durationBetweenTimes(p.startTime, p.endTime);
     panel.innerHTML = `
       <div class="ingredients-box">
+        <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; width:100%;">
+          <button type="button" data-role="phaseTimerBtn" class="pill ${p.timerStartedAt ? "solid" : ""}" style="font-size:14px; padding:9px 16px;">${p.timerStartedAt ? "\u25A0 Stop Timer" : "\u25B6 Start Timer"}</button>
+          <span style="font-size:12.5px; color:var(--muted); text-align:right;">${p.timerStartedAt ? "Running since " + formatTimeInputDisplay(toTimeInputValue(new Date(p.timerStartedAt))) : "Fills the times below \u2014 keeps counting if your phone sleeps"}</span>
+        </div>
         <div style="display:flex; gap:10px; width:100%;">
           <div style="display:flex; flex-direction:column; gap:6px; flex:1;">
             <label style="font-size:14px; font-weight:600; color:var(--ink);">Start time</label>
@@ -2563,6 +2572,38 @@
       render();
     });
 
+    const timerBtn = panel.querySelector('[data-role="phaseTimerBtn"]');
+    if (timerBtn) {
+      timerBtn.addEventListener("click", () => {
+        if (p.timerStartedAt) {
+          // Stop: compute the real elapsed time from the two timestamps
+          // (immune to the phone sleeping or the app being backgrounded in
+          // between, unlike a plain running counter) and commit it through
+          // the exact same path as typing the times in by hand, so all the
+          // existing per-phase logic (levain/bulk chaining, etc.) still runs.
+          const startVal = toTimeInputValue(new Date(p.timerStartedAt));
+          const endVal = toTimeInputValue(new Date());
+          p.timerStartedAt = null;
+          const sInput = panel.querySelector('[data-role="startTimeInput"]');
+          if (sInput) {
+            sInput.value = formatTimeInputDisplay(startVal);
+            sInput.dispatchEvent(new Event("blur"));
+          }
+          // Re-query rather than reuse: the line above may have triggered a
+          // full re-render of this panel, replacing the DOM nodes.
+          const eInput = panel.querySelector('[data-role="endTimeInput"]');
+          if (eInput) {
+            eInput.value = formatTimeInputDisplay(endVal);
+            eInput.dispatchEvent(new Event("blur"));
+          }
+        } else {
+          p.timerStartedAt = Date.now();
+          sessionStarted = true; if (!sessionStartedAt) sessionStartedAt = Date.now();
+          snapshotSession();
+          render();
+        }
+      });
+    }
     const startTimeInput = panel.querySelector('[data-role="startTimeInput"]');
     if (startTimeInput) {
       startTimeInput.addEventListener("focus", fillNowIfEmpty);
@@ -3014,6 +3055,10 @@
         <p class="phase-sub" style="margin:0; font-style:italic;">&#128161; Enter when this fold's rest period started and ended (about 30 minutes), then log it.</p>
 
         <div class="ingredients-box">
+          <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; width:100%;">
+            <button type="button" data-role="foldsTimerBtn" class="pill ${foldsTimerStartedAt ? "solid" : ""}" style="font-size:14px; padding:9px 16px;">${foldsTimerStartedAt ? "\u25A0 Stop Timer" : "\u25B6 Start Timer"}</button>
+            <span style="font-size:12.5px; color:var(--muted); text-align:right;">${foldsTimerStartedAt ? "Running since " + formatTimeInputDisplay(toTimeInputValue(new Date(foldsTimerStartedAt))) : "Fills the times below \u2014 keeps counting if your phone sleeps"}</span>
+          </div>
           <div style="display:flex; gap:10px; width:100%;">
             <div style="display:flex; flex-direction:column; gap:6px; flex:1;">
               <label style="font-size:14px; font-weight:600; color:var(--ink);">Start time</label>
@@ -3074,6 +3119,17 @@
       if (endInput && document.activeElement !== endInput) {
         endInput.value = foldsEndTime ? formatTimeInputDisplay(foldsEndTime) : "";
       }
+      const timerBtn = el("foldCard") ? el("foldCard").querySelector('[data-role="foldsTimerBtn"]') : null;
+      if (timerBtn) {
+        timerBtn.textContent = foldsTimerStartedAt ? "\u25A0 Stop Timer" : "\u25B6 Start Timer";
+        timerBtn.classList.toggle("solid", !!foldsTimerStartedAt);
+        const timerLabel = timerBtn.nextElementSibling;
+        if (timerLabel) {
+          timerLabel.textContent = foldsTimerStartedAt
+            ? "Running since " + formatTimeInputDisplay(toTimeInputValue(new Date(foldsTimerStartedAt)))
+            : "Fills the times below \u2014 keeps counting if your phone sleeps";
+        }
+      }
       const durationNote = el("foldDurationNote");
       if (durationNote) {
         const durationSeconds = durationBetweenTimes(foldsStartTime, foldsEndTime);
@@ -3087,6 +3143,33 @@
       }
     }
 
+    const foldsTimerBtn = container.querySelector('[data-role="foldsTimerBtn"]');
+    if (foldsTimerBtn) {
+      foldsTimerBtn.addEventListener("click", () => {
+        if (foldsTimerStartedAt) {
+          const startVal = toTimeInputValue(new Date(foldsTimerStartedAt));
+          const endVal = toTimeInputValue(new Date());
+          foldsTimerStartedAt = null;
+          const sInput = container.querySelector('[data-role="foldStartTimeInput"]');
+          if (sInput) {
+            sInput.value = formatTimeInputDisplay(startVal);
+            sInput.dispatchEvent(new Event("blur"));
+          }
+          // Re-query rather than reuse: the line above may have triggered a
+          // re-render, replacing this container's DOM nodes.
+          const eInput = container.querySelector('[data-role="foldEndTimeInput"]');
+          if (eInput) {
+            eInput.value = formatTimeInputDisplay(endVal);
+            eInput.dispatchEvent(new Event("blur"));
+          }
+        } else {
+          foldsTimerStartedAt = Date.now();
+          sessionStarted = true; if (!sessionStartedAt) sessionStartedAt = Date.now();
+          snapshotSession();
+          refreshFoldTimerUI();
+        }
+      });
+    }
     container.querySelectorAll('[data-role="foldStartTimeInput"]').forEach((inputEl) => {
       inputEl.addEventListener("focus", fillNowIfEmpty);
       inputEl.addEventListener("input", maskTime24Input);
