@@ -5171,15 +5171,26 @@
 
 
   // ---------- Save panel ----------
+  // Sync model matches the same proven approach already used in the
+  // Household Tasks / Contractor Task List app (same Firebase project):
+  // every push sends the FULL current snapshot, and every device that
+  // receives an update REPLACES its local sync-managed keys with exactly
+  // what's in that snapshot — including removing any local key that isn't
+  // present remotely anymore. That's what makes deletions (like clearing
+  // the active-session key when a bake is ended) actually propagate,
+  // instead of only ever merging in additions/edits.
+  function isSyncKey(key) {
+    return /sourdough|bake|recipe|fold|phase|loaf|bakers/i.test(key)
+      && key !== "sourdoughSyncLastApplied";
+  }
+
   function getAllAppData() {
     const data = { version: 1, exportedAt: new Date().toISOString(), localStorage: {} };
     try {
       for (let i = 0; i < localStorage.length; i++) {
         const k = localStorage.key(i);
         if (!k) continue;
-        if (/sourdough|bake|recipe|fold|phase|loaf|bakers/i.test(k)) {
-          data.localStorage[k] = localStorage.getItem(k);
-        }
+        if (isSyncKey(k)) data.localStorage[k] = localStorage.getItem(k);
       }
       ["sourdoughBakeLog", "sourdoughCustomRecipes", "sourdoughActiveSession"].forEach((k) => {
         const v = localStorage.getItem(k);
@@ -5292,6 +5303,16 @@
             localStorage.getItem("sourdoughTestimonials"),
             remote.localStorage["sourdoughTestimonials"]
           );
+          // Full replace: drop any local sync-managed key that's no longer
+          // in the remote snapshot (this is what makes a deletion, like an
+          // ended session, actually take effect here — not just additions).
+          for (let i = localStorage.length - 1; i >= 0; i--) {
+            const k = localStorage.key(i);
+            if (!k || k === "sourdoughTestimonials") continue;
+            if (isSyncKey(k) && !(k in remote.localStorage)) {
+              try { localStorage.removeItem(k); } catch (e) {}
+            }
+          }
           Object.keys(remote.localStorage).forEach((k) => {
             if (k === "sourdoughTestimonials") return; // handled via merge below
             try { localStorage.setItem(k, remote.localStorage[k]); } catch (e) {}
@@ -5332,9 +5353,16 @@
   // sync update, without needing to hunt down every mutation call site.
   (function hookStorageForSync() {
     const origSetItem = localStorage.setItem.bind(localStorage);
+    const origRemoveItem = localStorage.removeItem.bind(localStorage);
     localStorage.setItem = function (key, value) {
       origSetItem(key, value);
-      if (!syncApplyingRemote && /sourdough|bake|recipe|fold|phase|loaf|bakers/i.test(key) && key !== "sourdoughSyncLastApplied") {
+      if (!syncApplyingRemote && isSyncKey(key)) {
+        syncPushNow();
+      }
+    };
+    localStorage.removeItem = function (key) {
+      origRemoveItem(key);
+      if (!syncApplyingRemote && isSyncKey(key)) {
         syncPushNow();
       }
     };
