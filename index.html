@@ -1660,6 +1660,18 @@
     return null;
   }
 
+  // A saved phase's note text often already contains the real recorded
+  // range, e.g. "1 hour and 42 minutes (16:39 – 18:21)" — this recovers a
+  // duration straight from that text for phases whose elapsedSeconds never
+  // got captured (see parseElapsedSeconds), so old Bake Log entries can be
+  // repaired from data that's already there instead of guessed by hand.
+  function parseTimeRangeFromNote(note) {
+    if (!note) return null;
+    const m = String(note).match(/(\d{1,2}:\d{2})\s*[\u2013\u2012\-]\s*(\d{1,2}:\d{2})/);
+    if (!m) return null;
+    return durationBetweenTimes(m[1], m[2]);
+  }
+
   // ---------- shared 24h time-input helpers (start/end time boxes) ----------
   function maskTime24Input(e) {
     let digits = e.target.value.replace(/\D/g, "").slice(0, 4);
@@ -3303,10 +3315,18 @@
   // ---------- actions ----------
 
   function parseElapsedSeconds(p) {
-    if (!p.completed || !p.completedAt) return 0;
-    const prevAt = previousCompletionTimestamp(p);
-    if (!prevAt) return 0;
-    return Math.max(0, Math.round((p.completedAt - prevAt) / 1000));
+    if (p.completed && p.completedAt) {
+      const prevAt = previousCompletionTimestamp(p);
+      if (prevAt) return Math.max(0, Math.round((p.completedAt - prevAt) / 1000));
+    }
+    // Fall back to this phase's own recorded start/end clock time when the
+    // step-to-step chain above doesn't resolve — e.g. the very first phase
+    // (no predecessor to chain from), or a phase whose predecessor wasn't
+    // marked done through the same live-timer flow. The start/end times are
+    // still reliably recorded on the phase itself, just not chained.
+    const manual = durationBetweenTimes(p.startTime, p.endTime);
+    if (manual !== null && manual > 0) return manual;
+    return 0;
   }
 
   function buildPhaseTimeChart(items) {
@@ -4383,6 +4403,7 @@
       const editControlsHtml = isEditing
         ? `<div style="display:flex; gap:8px; flex-wrap:wrap;">
              <button data-add-bakelog-photo="${record.id}" style="border:1px dashed var(--line-strong); background:var(--card); color:var(--ink); font-size:12.5px; font-weight:600; cursor:pointer; padding:7px 12px; border-radius:12px; font-family:inherit;">+ Add photo</button>
+             <button data-fill-missing-times="${record.id}" style="border:1px dashed var(--line-strong); background:var(--card); color:var(--ink); font-size:12.5px; font-weight:600; cursor:pointer; padding:7px 12px; border-radius:12px; font-family:inherit;">Fill missing times from notes</button>
              <button data-save-bakelog-edit="${record.id}" style="border:none; background:var(--accent, #5a9a78); color:#fff; font-size:12.5px; font-weight:700; cursor:pointer; padding:7px 14px; border-radius:12px; font-family:inherit;">Save changes</button>
              <button data-cancel-bakelog-edit="${record.id}" style="border:none; background:none; color:var(--muted-light); font-size:12.5px; cursor:pointer; padding:7px 4px;">Cancel</button>
            </div>`
@@ -4487,6 +4508,27 @@
       btn.addEventListener("click", () => {
         bakeLogEditingId = null;
         renderBakeLog();
+      });
+    });
+    content.querySelectorAll("[data-fill-missing-times]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const id = parseInt(btn.getAttribute("data-fill-missing-times"), 10);
+        const record = getBakeLog().find((r) => r.id === id);
+        if (!record) return;
+        let filled = 0;
+        (record.phases || []).forEach((p, i) => {
+          const hasDuration = typeof p.elapsedSeconds === "number" && p.elapsedSeconds > 0;
+          const input = content.querySelector(`[data-edit-phase-duration="${id}:${i}"]`);
+          if (hasDuration || !input || input.value.trim()) return; // don't clobber a value already there
+          const recovered = parseTimeRangeFromNote(p.note);
+          if (recovered !== null && recovered > 0) {
+            input.value = formatDurationCompact(recovered);
+            filled++;
+          }
+        });
+        alert(filled > 0
+          ? `Filled in ${filled} phase${filled === 1 ? "" : "s"} from their notes. Review the values, then tap Save changes.`
+          : "Couldn't find a recoverable time range in the remaining phases' notes.");
       });
     });
     content.querySelectorAll("[data-save-bakelog-edit]").forEach((btn) => {
