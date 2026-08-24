@@ -223,6 +223,27 @@
     gap: 12px;
     box-shadow: var(--shadow-md);
   }
+  /* Raised, tappable "button" look for each Bake Log entry — a solid
+     drop shadow beneath the card that compresses on press, so each
+     entry reads as one big 3D button rather than a flat list row. */
+  .bakelog-card {
+    background: linear-gradient(180deg, #ffffff 0%, #fbf5fc 100%);
+    border: 1px solid var(--line-strong);
+    box-shadow: 0 4px 0 var(--line-strong), 0 8px 16px rgba(91,75,122,0.18);
+    transition: transform .1s ease, box-shadow .1s ease;
+    cursor: pointer;
+  }
+  .bakelog-card:active {
+    transform: translateY(3px);
+    box-shadow: 0 1px 0 var(--line-strong), 0 3px 8px rgba(91,75,122,0.16);
+  }
+  .bakelog-card [data-print-bake],
+  .bakelog-card [data-delete-bake],
+  .bakelog-card input,
+  .bakelog-card textarea,
+  .bakelog-card button {
+    cursor: pointer;
+  }
   .phase-head { display: flex; align-items: center; gap: 12px; }
   .collapse-btn {
     margin-left: auto;
@@ -1185,6 +1206,25 @@
     </div>
   </div>
 
+  <div id="bakeLogPhotoLightbox" style="display:none; position:fixed; inset:0; background:rgba(59,47,34,0.7); backdrop-filter:blur(2px); z-index:260; align-items:center; justify-content:center; padding:20px; box-sizing:border-box;">
+    <div style="position:relative; width:100%; max-width:480px;">
+      <img id="bakeLogPhotoLightboxImg" src="" style="width:100%; max-height:80vh; object-fit:contain; border-radius:16px; display:block; box-shadow: var(--shadow-lg);" />
+      <button type="button" id="bakeLogPhotoLightboxCloseBtn" title="Close" style="position:absolute; top:-14px; right:-14px; width:36px; height:36px; border-radius:50%; border:none; background:#fff; color:var(--ink); font-size:16px; cursor:pointer; display:flex; align-items:center; justify-content:center; box-shadow: var(--shadow-md);">&#10005;</button>
+    </div>
+  </div>
+
+  <div id="recipePreviewOverlay" style="display:none; position:fixed; inset:0; background:rgba(59,47,34,0.55); backdrop-filter:blur(2px); z-index:230; align-items:center; justify-content:center; padding:20px; box-sizing:border-box;">
+    <div class="card" style="width:100%; max-width:440px; max-height:85vh; overflow-y:auto; box-shadow: var(--shadow-lg);">
+      <div style="display:flex; align-items:center; justify-content:space-between; gap:8px;">
+        <h2 id="recipePreviewTitle" class="serif" style="margin:0; font-size:24px;"></h2>
+        <button type="button" class="collapse-btn" id="recipePreviewCloseBtn" title="Close" style="width:36px; height:36px; font-size:16px; flex-shrink:0;">&#10005;</button>
+      </div>
+      <p style="margin:8px 0 12px; font-size:12.5px; color:var(--muted); background:var(--accent-tint); border-radius:10px; padding:8px 10px;">Preview only — your active bake session stays untouched.</p>
+      <div id="recipePreviewContent"></div>
+      <button type="button" id="recipePreviewCloseBtn2" class="pill" style="width:100%; box-sizing:border-box; justify-content:center; margin-top:12px;">Close</button>
+    </div>
+  </div>
+
 </div>
 
 <script>
@@ -1199,7 +1239,7 @@
   // state happens to be baked into this HTML file's static markup (this can
   // happen if the page was saved/duplicated with a panel like Save open —
   // the browser's "Save As" captures the live DOM at that moment).
-  ["recapOverlay", "bakeLogOverlay", "saveOverlay", "helpOverlay", "discardConfirmOverlay", "testimonialLightbox"].forEach(function (id) {
+  ["recapOverlay", "bakeLogOverlay", "saveOverlay", "helpOverlay", "discardConfirmOverlay", "testimonialLightbox", "bakeLogPhotoLightbox", "recipePreviewOverlay"].forEach(function (id) {
     var ov = document.getElementById(id);
     if (!ov) return;
     ov.classList.remove("open");
@@ -1619,6 +1659,22 @@
     const minStr = minutes > 0 || hours === 0 ? minutes + (minutes === 1 ? " minute" : " minutes") : "";
     if (hourStr && minStr) return hourStr + " and " + minStr;
     return hourStr || minStr;
+  }
+
+  // Big-number stat version for the Bake Log button: a large leading
+  // number with its unit underneath (e.g. 29 / "hours", or 9 / "hr 4m")
+  // instead of a full sentence.
+  function formatDurationBig(totalSeconds) {
+    const totalMinutes = Math.max(0, Math.round(totalSeconds / 60));
+    const hours = Math.floor(totalMinutes / 60);
+    const minutes = totalMinutes % 60;
+    if (hours > 0) {
+      return {
+        big: String(hours),
+        unit: minutes > 0 ? (hours === 1 ? "hr " : "hrs ") + minutes + "m" : (hours === 1 ? "hour" : "hours"),
+      };
+    }
+    return { big: String(minutes), unit: minutes === 1 ? "minute" : "minutes" };
   }
 
   // compact version for badges next to phase names, e.g. "10m" or "2h 10m"
@@ -3606,9 +3662,13 @@
   // window can be opened this way.
   let bakeLogEditingId = null;
   // ids of Bake Log entries currently expanded (showing full detail).
-  // Collapsed by default; the most recent entry is auto-expanded the
-  // first time renderBakeLog builds a fresh set (see renderBakeLog()).
+  // All collapsed by default each time the log is opened (see
+  // openBakeLogOverlay); tap a card's chevron/header to expand it.
   let bakeLogExpandedIds = null;
+  // Whether editing/deleting Bake Log entries is unlocked. Toggled from the
+  // Save panel (Bake Log editing card); starts locked on page load so
+  // entries are protected from accidental edits/deletes by default.
+  let bakeLogUnlocked = false;
 
   // Reads the EXIF "DateTimeOriginal" (when the photo was actually taken) out of
   // a JPEG's binary header. Returns a timestamp (ms) or null if unavailable
@@ -4479,12 +4539,11 @@
     // First time through, start with just the most recent bake open so
     // the log isn't a wall of collapsed cards on first visit.
     if (bakeLogExpandedIds === null) {
-      bakeLogExpandedIds = new Set(log.length ? [log[0].id] : []);
+      bakeLogExpandedIds = new Set();
     }
 
     const comparisonChartHtml = buildBakeComparisonChart(log);
-    const timeSummaryHtml = buildBakeTimeSummary(log);
-    content.innerHTML = timeSummaryHtml + comparisonChartHtml + log.map((record) => {
+    content.innerHTML = comparisonChartHtml + log.map((record) => {
       const isEditing = bakeLogEditingId === record.id;
       // Editing a card always shows its full detail, regardless of
       // collapsed/expanded state.
@@ -4494,14 +4553,16 @@
         ? `<div style="display:flex; gap:8px; overflow-x:auto; padding-bottom:4px;">
             ${record.photos.map((src, i) => `
               <div style="position:relative; flex-shrink:0;">
-                <img src="${src}" style="width:96px; height:96px; object-fit:cover; border-radius:14px; display:block;" />
+                <img src="${src}" data-open-bakelog-photo="${record.id}:${i}" style="width:96px; height:96px; object-fit:cover; border-radius:14px; display:block; cursor:pointer;" />
                 ${isEditing ? `<button data-remove-bakelog-photo="${record.id}:${i}" title="Delete photo" style="position:absolute; top:4px; right:4px; width:22px; height:22px; border-radius:50%; border:none; background:rgba(59,47,34,0.65); color:#fff; font-size:11px; cursor:pointer; line-height:1; display:flex; align-items:center; justify-content:center;">&#10005;</button>` : ""}
               </div>
             `).join("")}
           </div>`
         : "";
 
-      const editControlsHtml = isEditing
+      const editControlsHtml = !bakeLogUnlocked
+        ? ""
+        : isEditing
         ? `<div style="display:flex; gap:8px; flex-wrap:wrap;">
              <button data-add-bakelog-photo="${record.id}" style="border:1px dashed var(--line-strong); background:var(--card); color:var(--ink); font-size:12.5px; font-weight:600; cursor:pointer; padding:7px 12px; border-radius:12px; font-family:inherit;">+ Add photo</button>
              <button data-fill-missing-times="${record.id}" style="border:1px dashed var(--line-strong); background:var(--card); color:var(--ink); font-size:12.5px; font-weight:600; cursor:pointer; padding:7px 12px; border-radius:12px; font-family:inherit;">Fill missing times from notes</button>
@@ -4543,6 +4604,13 @@
       // spot on the off chance that phase is ever missing from an entry.
       const foldsAlreadyPlaced = record.phases.some((p) => p.label === "Bulk Fermentation");
 
+      // Small cover photo shown right on the collapsed header/button, using
+      // whichever photo was saved first for this bake, so you can spot a
+      // bake by its picture without opening the card.
+      const thumbnailHtml = (record.photos && record.photos.length > 0)
+        ? `<img src="${record.photos[0]}" data-open-bakelog-photo="${record.id}:0" style="width:76px; height:76px; object-fit:cover; border-radius:14px; flex-shrink:0; box-shadow:0 2px 6px rgba(91,75,122,0.25); cursor:pointer;" />`
+        : "";
+
       const headerHtml = isEditing
         ? `<div style="min-width:0; flex:1;">
              <input data-edit-recipe-name="${record.id}" value="${escapeHtml(record.recipeName)}" style="font-family:inherit; font-size:19px; font-weight:700; color:var(--ink); border:1px solid var(--line-strong); border-radius:8px; padding:5px 8px; width:100%; box-sizing:border-box; background:var(--bg, #fff);" />
@@ -4555,9 +4623,6 @@
         : `<div style="min-width:0; flex:1;">
              <p class="serif" style="margin:0; font-size:20px;">${escapeHtml(record.recipeName)}</p>
              <p style="margin:2px 0 0; font-size:13px; color:var(--muted);">${record.dateLabel}</p>
-             ${typeof record.totalSeconds === "number" && record.totalSeconds > 0
-               ? `<p style="display:inline-block; margin:6px 0 0; font-size:12.5px; font-weight:700; color:var(--accent); background:var(--accent-tint); border:1px solid var(--accent); border-radius:999px; padding:4px 10px;">Levain to final bake: ${formatDurationWords(record.totalSeconds)}</p>`
-               : ""}
            </div>`;
 
       const notesHtml = isEditing
@@ -4572,9 +4637,23 @@
         </div>
       ` : "");
 
+      const timeStatHtml = (typeof record.totalSeconds === "number" && record.totalSeconds > 0)
+        ? (() => {
+            const stat = formatDurationBig(record.totalSeconds);
+            return `<div style="text-align:center; flex-shrink:0; min-width:52px;">
+                      <p style="margin:0; font-size:26px; font-weight:800; color:var(--accent); line-height:1;">${stat.big}</p>
+                      <p style="margin:2px 0 0; font-size:11px; font-weight:700; color:var(--accent); text-transform:uppercase; letter-spacing:.03em;">${stat.unit}</p>
+                    </div>`;
+          })()
+        : "";
+
       const detailHtml = `
-          ${photosHtml}
-          ${editControlsHtml}
+          ${isEditing ? photosHtml : ""}
+          <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
+            ${editControlsHtml}
+            <button data-print-bake="${record.id}" style="border:1px solid var(--line-strong); background:var(--card); color:var(--ink); font-size:12px; font-weight:600; cursor:pointer; padding:6px 12px; border-radius:999px; font-family:inherit;">Print PDF</button>
+            ${bakeLogUnlocked ? `<button data-delete-bake="${record.id}" style="border:none; background:none; color:var(--muted-light); font-size:13px; cursor:pointer; padding:6px 4px;">Delete</button>` : ""}
+          </div>
           ${(() => {
             if (isEditing) return ""; // editable durations are shown inline per phase below instead
             const items = (record.phases || [])
@@ -4585,12 +4664,11 @@
       `;
 
       return `
-        <div class="card" data-bakelog-card="${record.id}" style="padding:16px; gap:10px; box-shadow: var(--shadow-sm);">
-          <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:8px;">
-            <div ${isEditing ? "" : `data-toggle-bakelog="${record.id}"`} style="min-width:0; flex:1; display:flex; ${isEditing ? "" : "cursor:pointer;"}">${headerHtml}</div>
-            <div style="display:flex; align-items:center; gap:10px; flex-shrink:0;">
-              <button data-print-bake="${record.id}" style="border:1px solid var(--line-strong); background:var(--card); color:var(--ink); font-size:12px; font-weight:600; cursor:pointer; padding:6px 10px; border-radius:999px; font-family:inherit;">Print PDF</button>
-              <button data-delete-bake="${record.id}" style="border:none; background:none; color:var(--muted-light); font-size:13px; cursor:pointer;">Delete</button>
+        <div class="card ${isEditing ? "" : "bakelog-card"}" data-bakelog-card="${record.id}" style="padding:16px; gap:10px; margin-bottom:6px;">
+          <div style="display:flex; align-items:center; justify-content:space-between; gap:8px;">
+            <div ${isEditing ? "" : `data-toggle-bakelog="${record.id}"`} style="min-width:0; flex:1; display:flex; align-items:center; gap:10px; ${isEditing ? "" : "cursor:pointer;"}">${thumbnailHtml}${headerHtml}</div>
+            <div style="display:flex; align-items:center; gap:12px; flex-shrink:0;">
+              ${isEditing ? "" : timeStatHtml}
               ${isEditing ? "" : `<span data-toggle-bakelog="${record.id}" title="${isExpanded ? "Collapse" : "Expand"}" style="cursor:pointer; display:flex; align-items:center; justify-content:center; width:26px; height:26px; border-radius:50%; border:1px solid var(--line-strong); color:var(--ink); font-size:12px; flex-shrink:0; transform:rotate(${isExpanded ? "180deg" : "0deg"}); transition:transform 0.15s ease;">&#9660;</span>`}
             </div>
           </div>
@@ -4606,6 +4684,15 @@
         if (bakeLogExpandedIds.has(id)) bakeLogExpandedIds.delete(id);
         else bakeLogExpandedIds.add(id);
         renderBakeLog();
+      });
+    });
+    content.querySelectorAll("[data-open-bakelog-photo]").forEach((img) => {
+      img.addEventListener("click", (e) => {
+        e.stopPropagation();
+        const [idStr, idxStr] = img.getAttribute("data-open-bakelog-photo").split(":");
+        const record = log.find((r) => r.id === parseInt(idStr, 10));
+        const src = record && record.photos && record.photos[parseInt(idxStr, 10)];
+        if (src) openBakeLogPhotoLightbox(src);
       });
     });
     content.querySelectorAll("[data-delete-bake]").forEach((btn) => {
@@ -4867,13 +4954,53 @@
   }
 
   function openBakeLogOverlay() {
+    // Every bake starts collapsed each time the log is opened — tap a
+    // card to expand it.
+    bakeLogExpandedIds = new Set();
     renderBakeLog();
+    updateBakeLogLockUI();
     el("bakeLogOverlay").style.display = "flex";
   }
   if (el("openBakeLogBtn")) el("openBakeLogBtn").addEventListener("click", openBakeLogOverlay);
   document.querySelectorAll('[data-action="open-bake-log"]').forEach((btn) => {
     btn.addEventListener("click", openBakeLogOverlay);
   });
+
+  // Lock/unlock toggle (lives in the Save panel) guarding Edit & Delete on
+  // Bake Log entries. Locked by default so entries can't be changed or
+  // removed by accident; tapping the button there unlocks/re-locks, and
+  // the Bake Log screen (if open) reflects it immediately.
+  function updateBakeLogLockUI() {
+    const btn = el("bakeLogLockBtn");
+    const hint = el("bakeLogLockHint");
+    if (btn) btn.innerHTML = bakeLogUnlocked ? "&#128275; Lock editing" : "&#128274; Unlock editing";
+    if (hint) hint.textContent = bakeLogUnlocked
+      ? "Unlocked — entries in the Bake Log can be edited or deleted. Lock it again when you're done."
+      : "Locked — entries in the Bake Log can be viewed and printed, but not edited or deleted.";
+  }
+
+  // Tap-to-enlarge for Bake Log photos (the header thumbnail and the
+  // full photo strip). Just shows the picture bigger; no edit/delete
+  // controls here since those already live on the card itself.
+  function openBakeLogPhotoLightbox(src) {
+    const box = el("bakeLogPhotoLightbox");
+    const img = el("bakeLogPhotoLightboxImg");
+    if (!box || !img) return;
+    img.src = src;
+    box.style.display = "flex";
+  }
+  function closeBakeLogPhotoLightbox() {
+    const box = el("bakeLogPhotoLightbox");
+    if (box) box.style.display = "none";
+  }
+  if (el("bakeLogPhotoLightboxCloseBtn")) el("bakeLogPhotoLightboxCloseBtn").addEventListener("click", closeBakeLogPhotoLightbox);
+  const bakeLogPhotoLightboxEl = el("bakeLogPhotoLightbox");
+  if (bakeLogPhotoLightboxEl) {
+    bakeLogPhotoLightboxEl.addEventListener("click", (e) => {
+      if (e.target === bakeLogPhotoLightboxEl) closeBakeLogPhotoLightbox();
+    });
+  }
+
   el("closeBakeLogBtn").addEventListener("click", () => {
     el("bakeLogOverlay").style.display = "none";
   });
@@ -4972,6 +5099,83 @@
       return (def && def.yieldNote) ? def.yieldNote : "";
     }
 
+    // Read-only ingredient lookup for the recipe preview (used while a bake
+    // session is in progress, so the person can check another recipe
+    // without touching the live session). Mirrors the same precedence
+    // selectRecipe uses: saved custom snapshot > built-in recipe override
+    // > base phase defaults — but only reads, never mutates state.
+    function getRecipePreviewPhases(name) {
+      const data = getRecipeData();
+      const snapshot = data[name];
+      const recipeDef = RECIPE_DEFAULTS[name];
+      const result = {};
+      INGREDIENT_PHASE_KEYS.forEach((key) => {
+        const baseDef = PHASE_DEFS.find((d) => d.key === key);
+        let ingredients = (baseDef && baseDef.ingredients) ? baseDef.ingredients.map((i) => ({ ...i })) : [];
+        let inclusions = (baseDef && baseDef.inclusions) ? baseDef.inclusions.map((i) => ({ ...i })) : [];
+        const override = recipeDef && recipeDef.phases && recipeDef.phases[key];
+        if (override) {
+          if (override.ingredients) ingredients = override.ingredients.map((i) => ({ ...i }));
+          if (override.inclusions) inclusions = override.inclusions.map((i) => ({ ...i }));
+        }
+        const savedPhase = snapshot && snapshot.phases && snapshot.phases[key];
+        if (savedPhase) {
+          if (savedPhase.ingredients) ingredients = savedPhase.ingredients.map((i) => ({ ...i }));
+          if (savedPhase.inclusions) inclusions = savedPhase.inclusions.map((i) => ({ ...i }));
+        }
+        result[key] = { ingredients, inclusions };
+      });
+      return result;
+    }
+
+    function openRecipePreview(name) {
+      const titleEl = el("recipePreviewTitle");
+      const container = el("recipePreviewContent");
+      const overlay = el("recipePreviewOverlay");
+      if (!titleEl || !container || !overlay) return;
+      titleEl.textContent = name;
+      const yieldNote = getRecipeYieldNote(name);
+      const phaseData = getRecipePreviewPhases(name);
+      const sections = INGREDIENT_PHASE_KEYS.map((key) => {
+        const baseDef = PHASE_DEFS.find((d) => d.key === key);
+        const label = baseDef ? baseDef.label : key;
+        const icon = baseDef ? baseDef.icon : "";
+        const { ingredients, inclusions } = phaseData[key];
+        const rowHtml = (i, tag) => `
+          <div style="display:flex; justify-content:space-between; gap:10px; padding:5px 0; border-bottom:1px solid var(--line);">
+            <span style="font-size:14px; color:var(--ink);">${i.name}${tag ? ` <span style="font-size:11px; color:var(--muted-light);">${tag}</span>` : ""}</span>
+            <span style="font-size:14px; color:var(--muted); font-weight:600; white-space:nowrap;">${i.qty || ""}</span>
+          </div>`;
+        const rows = (ingredients || []).filter((i) => i.name && i.name.trim()).map((i) => rowHtml(i, "")).join("");
+        const inclusionRows = (inclusions || []).filter((i) => i.name && i.name.trim()).map((i) => rowHtml(i, "(inclusion)")).join("");
+        if (!rows && !inclusionRows) return "";
+        return `
+          <div style="margin:0 0 14px;">
+            <p style="margin:0 0 2px; font-weight:700; font-size:14px; color:var(--ink);">${icon} ${label}</p>
+            ${rows}${inclusionRows}
+          </div>`;
+      }).join("");
+      container.innerHTML = `
+        ${yieldNote ? `<p style="margin:0 0 12px; font-size:13px; color:var(--accent-dark, var(--accent)); font-weight:600;">${yieldNote}</p>` : ""}
+        ${sections || `<p style="color:var(--muted); font-size:14px;">No ingredient details saved for this recipe yet.</p>`}
+      `;
+      overlay.style.display = "flex";
+    }
+
+    function closeRecipePreview() {
+      const overlay = el("recipePreviewOverlay");
+      if (overlay) overlay.style.display = "none";
+    }
+
+    if (el("recipePreviewCloseBtn")) el("recipePreviewCloseBtn").addEventListener("click", closeRecipePreview);
+    if (el("recipePreviewCloseBtn2")) el("recipePreviewCloseBtn2").addEventListener("click", closeRecipePreview);
+    const recipePreviewOverlayEl = el("recipePreviewOverlay");
+    if (recipePreviewOverlayEl) {
+      recipePreviewOverlayEl.addEventListener("click", (e) => {
+        if (e.target === recipePreviewOverlayEl) closeRecipePreview();
+      });
+    }
+
     function resetAllProgress() {
       phases.forEach((p) => {
         p.completed = false;
@@ -4996,7 +5200,7 @@
     function selectRecipe(name, opts) {
       opts = opts || {};
       if (opts.fromRecipeTab && sessionStarted) {
-        alert("You have a bake in progress. Finish or end that session (or switch recipes from the Bake tab instead) before changing the active recipe here — this keeps your current session untouched.");
+        openRecipePreview(name);
         return;
       }
       input.value = name;
@@ -5286,10 +5490,6 @@
 
   el("startNewBakeBtn").addEventListener("click", () => {
     saveBakeToLog();
-    // Show the bake that was just saved open by default next time the
-    // log is viewed, instead of leaving it collapsed like older entries.
-    const freshLog = getBakeLog();
-    if (freshLog.length && bakeLogExpandedIds) bakeLogExpandedIds.add(freshLog[0].id);
     resetSessionAfterRecap();
   });
 
@@ -5712,6 +5912,7 @@
     o.style.display = "flex";
     o.setAttribute("aria-hidden", "false");
     updateStorageUsageDisplay();
+    updateBakeLogLockUI();
   }
 
   function closeSavePanel() {
@@ -5977,6 +6178,14 @@ async function actionCreatePdfBakeLog() {
       syncNowManual();
       return;
     }
+    if (t.id === "bakeLogLockBtn" || t.closest("#bakeLogLockBtn")) {
+      ev.preventDefault();
+      bakeLogUnlocked = !bakeLogUnlocked;
+      if (!bakeLogUnlocked) bakeLogEditingId = null; // re-locking exits any in-progress edit
+      updateBakeLogLockUI();
+      if (el("bakeLogOverlay").style.display !== "none") renderBakeLog();
+      return;
+    }
   });
 
   initFirebaseSync();
@@ -6053,6 +6262,14 @@ async function actionCreatePdfBakeLog() {
       <p>Printable recap of your saved bakes from the Bake Log.</p>
       <div class="save-actions">
         <button type="button" class="save-btn soft" id="savePdfLogBtn">Create PDF of Bake Log</button>
+      </div>
+    </div>
+
+    <div class="save-card">
+      <h3>Bake Log editing</h3>
+      <p id="bakeLogLockHint">Locked — entries in the Bake Log can be viewed and printed, but not edited or deleted.</p>
+      <div class="save-actions">
+        <button type="button" class="save-btn outline" id="bakeLogLockBtn">&#128274; Unlock editing</button>
       </div>
     </div>
 
