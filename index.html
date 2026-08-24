@@ -3605,6 +3605,10 @@
   // photos), or null if none. Only entries still inside their 48-hour edit
   // window can be opened this way.
   let bakeLogEditingId = null;
+  // ids of Bake Log entries currently expanded (showing full detail).
+  // Collapsed by default; the most recent entry is auto-expanded the
+  // first time renderBakeLog builds a fresh set (see renderBakeLog()).
+  let bakeLogExpandedIds = null;
 
   // Reads the EXIF "DateTimeOriginal" (when the photo was actually taken) out of
   // a JPEG's binary header. Returns a timestamp (ms) or null if unavailable
@@ -4472,10 +4476,19 @@
       content.innerHTML = `<p style="color:var(--muted); font-size:15px;">No bakes saved yet. Finish a session and tap "Save to Bake Log" to add your first postcard.</p>`;
       return;
     }
+    // First time through, start with just the most recent bake open so
+    // the log isn't a wall of collapsed cards on first visit.
+    if (bakeLogExpandedIds === null) {
+      bakeLogExpandedIds = new Set(log.length ? [log[0].id] : []);
+    }
+
     const comparisonChartHtml = buildBakeComparisonChart(log);
     const timeSummaryHtml = buildBakeTimeSummary(log);
     content.innerHTML = timeSummaryHtml + comparisonChartHtml + log.map((record) => {
       const isEditing = bakeLogEditingId === record.id;
+      // Editing a card always shows its full detail, regardless of
+      // collapsed/expanded state.
+      const isExpanded = isEditing || bakeLogExpandedIds.has(record.id);
 
       const photosHtml = (record.photos && record.photos.length > 0)
         ? `<div style="display:flex; gap:8px; overflow-x:auto; padding-bottom:4px;">
@@ -4559,15 +4572,7 @@
         </div>
       ` : "");
 
-      return `
-        <div class="card" data-bakelog-card="${record.id}" style="padding:16px; gap:10px; box-shadow: var(--shadow-sm);">
-          <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:8px;">
-            ${headerHtml}
-            <div style="display:flex; align-items:center; gap:10px; flex-shrink:0;">
-              <button data-print-bake="${record.id}" style="border:1px solid var(--line-strong); background:var(--card); color:var(--ink); font-size:12px; font-weight:600; cursor:pointer; padding:6px 10px; border-radius:999px; font-family:inherit;">Print PDF</button>
-              <button data-delete-bake="${record.id}" style="border:none; background:none; color:var(--muted-light); font-size:13px; cursor:pointer;">Delete</button>
-            </div>
-          </div>
+      const detailHtml = `
           ${photosHtml}
           ${editControlsHtml}
           ${(() => {
@@ -4577,10 +4582,32 @@
             return items.length ? buildPhaseTimeChart(items) : "";
           })()}
           <div>${phasesHtml}${foldsAlreadyPlaced ? "" : foldsHtml}${notesHtml}</div>
+      `;
+
+      return `
+        <div class="card" data-bakelog-card="${record.id}" style="padding:16px; gap:10px; box-shadow: var(--shadow-sm);">
+          <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:8px;">
+            <div ${isEditing ? "" : `data-toggle-bakelog="${record.id}"`} style="min-width:0; flex:1; display:flex; ${isEditing ? "" : "cursor:pointer;"}">${headerHtml}</div>
+            <div style="display:flex; align-items:center; gap:10px; flex-shrink:0;">
+              <button data-print-bake="${record.id}" style="border:1px solid var(--line-strong); background:var(--card); color:var(--ink); font-size:12px; font-weight:600; cursor:pointer; padding:6px 10px; border-radius:999px; font-family:inherit;">Print PDF</button>
+              <button data-delete-bake="${record.id}" style="border:none; background:none; color:var(--muted-light); font-size:13px; cursor:pointer;">Delete</button>
+              ${isEditing ? "" : `<span data-toggle-bakelog="${record.id}" title="${isExpanded ? "Collapse" : "Expand"}" style="cursor:pointer; display:flex; align-items:center; justify-content:center; width:26px; height:26px; border-radius:50%; border:1px solid var(--line-strong); color:var(--ink); font-size:12px; flex-shrink:0; transform:rotate(${isExpanded ? "180deg" : "0deg"}); transition:transform 0.15s ease;">&#9660;</span>`}
+            </div>
+          </div>
+          ${isExpanded ? detailHtml : ""}
         </div>
       `;
     }).join("");
 
+    content.querySelectorAll("[data-toggle-bakelog]").forEach((el2) => {
+      el2.addEventListener("click", (e) => {
+        e.stopPropagation();
+        const id = parseInt(el2.getAttribute("data-toggle-bakelog"), 10);
+        if (bakeLogExpandedIds.has(id)) bakeLogExpandedIds.delete(id);
+        else bakeLogExpandedIds.add(id);
+        renderBakeLog();
+      });
+    });
     content.querySelectorAll("[data-delete-bake]").forEach((btn) => {
       btn.addEventListener("click", () => {
         const id = parseInt(btn.getAttribute("data-delete-bake"), 10);
@@ -4589,6 +4616,7 @@
           localStorage.setItem("sourdoughBakeLog", JSON.stringify(filtered));
         } catch (e) {}
         if (bakeLogEditingId === id) bakeLogEditingId = null;
+        if (bakeLogExpandedIds) bakeLogExpandedIds.delete(id);
         renderBakeLog();
       });
     });
@@ -5258,6 +5286,10 @@
 
   el("startNewBakeBtn").addEventListener("click", () => {
     saveBakeToLog();
+    // Show the bake that was just saved open by default next time the
+    // log is viewed, instead of leaving it collapsed like older entries.
+    const freshLog = getBakeLog();
+    if (freshLog.length && bakeLogExpandedIds) bakeLogExpandedIds.add(freshLog[0].id);
     resetSessionAfterRecap();
   });
 
