@@ -2656,7 +2656,24 @@
     }
     const startTimeInput = panel.querySelector('[data-role="startTimeInput"]');
     if (startTimeInput) {
-      startTimeInput.addEventListener("focus", fillNowIfEmpty);
+      if (p.key === "bulkRise") {
+        // Final Proof follows straight on from the last stretch & fold /
+        // coil fold, so its Start Time should default to that fold's end
+        // time rather than "now" -- falls back to "now" only when no fold
+        // has been logged yet.
+        startTimeInput.addEventListener("focus", (e) => {
+          if (e.target.value) return;
+          const latestFoldEnd = getLatestFoldEndTime();
+          if (latestFoldEnd) {
+            e.target.value = formatTimeInputDisplay(latestFoldEnd);
+            e.target.select();
+          } else {
+            fillNowIfEmpty(e);
+          }
+        });
+      } else {
+        startTimeInput.addEventListener("focus", fillNowIfEmpty);
+      }
       startTimeInput.addEventListener("input", maskTime24Input);
       startTimeInput.addEventListener("blur", (e) => {
         commitTime24Input(e, (val) => {
@@ -3831,6 +3848,102 @@
     });
   }
 
+  // ---------- photo storage (IndexedDB) ----------
+  // Bake Log photos used to be embedded as base64 text directly inside the
+  // "sourdoughBakeLog" localStorage entry. localStorage is capped at a few
+  // MB per site, so a handful of bakes with photos could fill it entirely —
+  // that's what the old "your photo library may be full" error actually
+  // meant (nothing to do with the phone's real photo library). IndexedDB
+  // has a much larger quota (a share of free disk space), so photos now
+  // live there instead; a Bake Log record only stores a short reference
+  // string ("idb:<id>") pointing at the real image.
+  const PHOTO_DB_NAME = "sourdoughPhotoDB";
+  const PHOTO_STORE = "photos";
+  let photoDbPromise = null;
+  function openPhotoDb() {
+    if (photoDbPromise) return photoDbPromise;
+    photoDbPromise = new Promise((resolve, reject) => {
+      if (!window.indexedDB) { reject(new Error("IndexedDB unavailable")); return; }
+      const req = indexedDB.open(PHOTO_DB_NAME, 1);
+      req.onupgradeneeded = () => {
+        if (!req.result.objectStoreNames.contains(PHOTO_STORE)) req.result.createObjectStore(PHOTO_STORE);
+      };
+      req.onsuccess = () => resolve(req.result);
+      req.onerror = () => reject(req.error);
+    });
+    return photoDbPromise;
+  }
+  function makePhotoRef() {
+    return "idb:" + Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+  }
+  function isPhotoRef(v) {
+    return typeof v === "string" && v.indexOf("idb:") === 0;
+  }
+  function savePhotoToDb(dataUrl) {
+    const ref = makePhotoRef();
+    return openPhotoDb().then((db) => new Promise((resolve, reject) => {
+      const tx = db.transaction(PHOTO_STORE, "readwrite");
+      tx.objectStore(PHOTO_STORE).put(dataUrl, ref.slice(4));
+      tx.oncomplete = () => resolve(ref);
+      tx.onerror = () => reject(tx.error);
+    }));
+  }
+  function getPhotoFromDb(ref) {
+    return openPhotoDb().then((db) => new Promise((resolve, reject) => {
+      const tx = db.transaction(PHOTO_STORE, "readonly");
+      const req = tx.objectStore(PHOTO_STORE).get(ref.slice(4));
+      req.onsuccess = () => resolve(req.result || null);
+      req.onerror = () => reject(req.error);
+    })).catch(() => null);
+  }
+  function deletePhotoFromDb(ref) {
+    return openPhotoDb().then((db) => new Promise((resolve, reject) => {
+      const tx = db.transaction(PHOTO_STORE, "readwrite");
+      tx.objectStore(PHOTO_STORE).delete(ref.slice(4));
+      tx.oncomplete = () => resolve();
+      tx.onerror = () => reject(tx.error);
+    })).catch(() => {});
+  }
+  // After content is written to the DOM, hydrate every
+  // <img data-photo-ref="idb:..."> with its real image from IndexedDB.
+  function hydratePhotoRefs(root) {
+    (root || document).querySelectorAll("img[data-photo-ref]").forEach((img) => {
+      const ref = img.getAttribute("data-photo-ref");
+      if (!ref) return;
+      getPhotoFromDb(ref).then((url) => { if (url) img.src = url; });
+    });
+  }
+  // One-time migration: move any photo already embedded as raw base64 in
+  // the saved Bake Log out into IndexedDB, replacing it with a short
+  // reference. This is what actually frees up the localStorage space that
+  // caused the quota error in the first place, even before any new photo
+  // is added.
+  function migrateBakeLogPhotosToDb() {
+    if (localStorage.getItem("sourdoughPhotoMigration_v1") === "done") return;
+    try {
+      const log = getBakeLog();
+      let touched = false;
+      const jobs = [];
+      log.forEach((record) => {
+        if (!record.photos || !record.photos.length) return;
+        record.photos.forEach((p, i) => {
+          if (isPhotoRef(p) || !p) return;
+          touched = true;
+          jobs.push(savePhotoToDb(p).then((ref) => { record.photos[i] = ref; }).catch(() => {}));
+        });
+      });
+      Promise.all(jobs).then(() => {
+        try {
+          if (touched) localStorage.setItem("sourdoughBakeLog", JSON.stringify(log));
+          localStorage.setItem("sourdoughPhotoMigration_v1", "done");
+          if (touched && typeof renderBakeLog === "function" && el("bakeLogOverlay") && el("bakeLogOverlay").style.display !== "none") {
+            renderBakeLog();
+          }
+        } catch (e) {}
+      });
+    } catch (e) {}
+  }
+
   function renderRecapPhotoGrid() {
     const grid = el("recapPhotoGrid");
     if (recapPhotos.length === 0) {
@@ -4477,7 +4590,7 @@
     }
   }
 
-  function saveBakeToLog() {
+  async function saveBakeToLog() {
     const recipeName = el("recipeNameInput").value.trim() || "Untitled bake";
     const notesVal = el("notes").value.trim();
     const now = new Date();
@@ -4560,12 +4673,19 @@
       hydrationPct: bakersPct.totalHydrationPct,
     } : null;
 
+    const photoRefs = [];
+    for (const src of recapPhotos) {
+      try {
+        photoRefs.push(await savePhotoToDb(src));
+      } catch (e) {}
+    }
+
     const record = {
       id: Date.now(),
       date: now.toISOString(),
       dateLabel: now.toLocaleDateString([], { month: "short", day: "numeric", year: "numeric" }),
       recipeName: recipeName,
-      photos: recapPhotos.slice(),
+      photos: photoRefs,
       totalSeconds: totalSeconds,
       recipeSummary: recipeSummary,
       loafCount: loafMultiplier,
@@ -4579,7 +4699,7 @@
     try {
       localStorage.setItem("sourdoughBakeLog", JSON.stringify(log));
     } catch (e) {
-      alert("Couldn't save this bake — your photo library may be full. Try removing a photo or two.");
+      alert("Couldn't save this bake — storage may be full. Try removing a photo or two from an older bake.");
     }
   }
 
@@ -4629,7 +4749,7 @@
         ? `<div style="display:flex; gap:8px; overflow-x:auto; padding-bottom:4px;">
             ${record.photos.map((src, i) => `
               <div style="position:relative; flex-shrink:0;">
-                <img src="${src}" data-open-bakelog-photo="${record.id}:${i}" style="width:96px; height:96px; object-fit:cover; border-radius:14px; display:block; cursor:pointer;" />
+                <img src="${isPhotoRef(src) ? "" : src}" ${isPhotoRef(src) ? `data-photo-ref="${src}"` : ""} data-open-bakelog-photo="${record.id}:${i}" style="width:96px; height:96px; object-fit:cover; border-radius:14px; display:block; cursor:pointer; background:var(--accent-bg);" />
                 ${isEditing ? `<button data-remove-bakelog-photo="${record.id}:${i}" title="Delete photo" style="position:absolute; top:4px; right:4px; width:22px; height:22px; border-radius:50%; border:none; background:rgba(59,47,34,0.65); color:#fff; font-size:11px; cursor:pointer; line-height:1; display:flex; align-items:center; justify-content:center;">&#10005;</button>` : ""}
               </div>
             `).join("")}
@@ -4684,7 +4804,7 @@
       // whichever photo was saved first for this bake, so you can spot a
       // bake by its picture without opening the card.
       const thumbnailHtml = (record.photos && record.photos.length > 0)
-        ? `<img src="${record.photos[0]}" data-open-bakelog-photo="${record.id}:0" style="width:76px; height:76px; object-fit:cover; border-radius:14px; flex-shrink:0; box-shadow:0 2px 6px rgba(91,75,122,0.25); cursor:pointer;" />`
+        ? `<img src="${isPhotoRef(record.photos[0]) ? "" : record.photos[0]}" ${isPhotoRef(record.photos[0]) ? `data-photo-ref="${record.photos[0]}"` : ""} data-open-bakelog-photo="${record.id}:0" style="width:76px; height:76px; object-fit:cover; border-radius:14px; flex-shrink:0; box-shadow:0 2px 6px rgba(91,75,122,0.25); cursor:pointer; background:var(--accent-bg);" />`
         : "";
 
       const headerHtml = isEditing
@@ -4757,6 +4877,7 @@
         </div>
       `;
     }).join("");
+    hydratePhotoRefs(content);
 
     content.querySelectorAll("[data-toggle-bakelog]").forEach((el2) => {
       el2.addEventListener("click", (e) => {
@@ -4773,7 +4894,12 @@
         const [idStr, idxStr] = img.getAttribute("data-open-bakelog-photo").split(":");
         const record = log.find((r) => r.id === parseInt(idStr, 10));
         const src = record && record.photos && record.photos[parseInt(idxStr, 10)];
-        if (src) openBakeLogPhotoLightbox(src);
+        if (!src) return;
+        if (isPhotoRef(src)) {
+          getPhotoFromDb(src).then((url) => { if (url) openBakeLogPhotoLightbox(url); });
+        } else {
+          openBakeLogPhotoLightbox(src);
+        }
       });
     });
     content.querySelectorAll("[data-delete-bake]").forEach((btn) => {
@@ -4789,10 +4915,12 @@
       });
     });
     content.querySelectorAll("[data-print-bake]").forEach((btn) => {
-      btn.addEventListener("click", () => {
+      btn.addEventListener("click", async () => {
         const id = parseInt(btn.getAttribute("data-print-bake"), 10);
         const record = getBakeLog().find((r) => r.id === id);
-        if (record) printBakeRecordAsPdf(record);
+        if (!record) return;
+        const resolvedPhotos = await Promise.all((record.photos || []).map((p) => (isPhotoRef(p) ? getPhotoFromDb(p) : Promise.resolve(p))));
+        printBakeRecordAsPdf({ ...record, photos: resolvedPhotos.filter(Boolean) });
       });
     });
     content.querySelectorAll("[data-edit-bakelog]").forEach((btn) => {
@@ -4860,7 +4988,7 @@
           try {
             localStorage.setItem("sourdoughBakeLog", JSON.stringify(freshLog));
           } catch (e) {
-            alert("Couldn't save your changes — your photo library may be full.");
+            alert("Couldn't save your changes — storage may be full.");
           }
         }
         bakeLogEditingId = null;
@@ -4875,7 +5003,9 @@
         const freshLog = getBakeLog();
         const record = freshLog.find((r) => r.id === id);
         if (record && record.photos && idx > -1 && idx < record.photos.length) {
+          const removed = record.photos[idx];
           record.photos.splice(idx, 1);
+          if (isPhotoRef(removed)) deletePhotoFromDb(removed);
           try {
             localStorage.setItem("sourdoughBakeLog", JSON.stringify(freshLog));
           } catch (e) {}
@@ -4900,8 +5030,9 @@
             for (const file of files) {
               try {
                 const dataUrl = await resizeImage(file, 900, 0.72);
+                const ref = await savePhotoToDb(dataUrl);
                 record.photos = record.photos || [];
-                record.photos.push(dataUrl);
+                record.photos.push(ref);
               } catch (err) {}
             }
             try {
@@ -4911,7 +5042,7 @@
             }
             renderBakeLog();
             if (failed) {
-              alert("Couldn't save this photo — your photo library may be full. Try removing a photo or two.");
+              alert("Couldn't save this photo — storage may be full. Try removing a photo or two from an older bake.");
             }
           }
           document.body.removeChild(input);
@@ -5595,8 +5726,8 @@
     render();
   }
 
-  el("startNewBakeBtn").addEventListener("click", () => {
-    saveBakeToLog();
+  el("startNewBakeBtn").addEventListener("click", async () => {
+    await saveBakeToLog();
     resetSessionAfterRecap();
   });
 
@@ -6296,6 +6427,7 @@ async function actionCreatePdfBakeLog() {
   });
 
   initFirebaseSync();
+  migrateBakeLogPhotosToDb();
 
   render();
 })();
@@ -6422,5 +6554,3 @@ async function actionCreatePdfBakeLog() {
 
 </body>
 </html>
-
-  
