@@ -863,7 +863,11 @@
 
   <!-- BAKE TAB -->
   <div class="tab-panel active" id="tab-bake">
-    <div>
+    <div style="position:relative;">
+      <div id="bakeClock" style="display:none; position:absolute; top:2px; right:0; z-index:5; text-align:center; background:var(--card); border:1.5px solid var(--accent, #E091C7); border-radius:14px; padding:5px 11px 6px; box-shadow:0 2px 8px rgba(91,75,122,0.18);">
+        <div id="bakeClockLabel" style="font-size:10px; font-weight:700; letter-spacing:0.04em; text-transform:uppercase; color:var(--muted);">Bake clock</div>
+        <div id="bakeClockTime" style="font-size:20px; font-weight:800; color:var(--ink); font-variant-numeric:tabular-nums; line-height:1.15;">0:00:00</div>
+      </div>
       <h1 class="serif" id="pageTitle">Bake</h1>
       <div id="recipeQtyRow" style="display:flex; flex-direction:column; flex-wrap:nowrap; align-items:flex-start; gap:8px; margin:4px 0; width:100%; max-width:100%; box-sizing:border-box;">
         <div style="position:relative; flex:0 0 auto; min-width:0; max-width:100%; display:flex; align-items:center; gap:8px;">
@@ -908,7 +912,7 @@
 
     <div style="height:1px; background:var(--line); margin:8px 4px 0;"></div>
 
-    <button type="button" id="openSaveBtn" style="display:block; width:100%; text-align:center; font-size:12px; color:var(--muted-light); margin:2px 0 0; cursor:pointer; background:transparent; border:1px solid var(--line); border-radius:999px; padding:8px; font-family:inherit;">&copy; Thor 2026 · Timer v2.9</button>
+    <button type="button" id="openSaveBtn" style="display:block; width:100%; text-align:center; font-size:12px; color:var(--muted-light); margin:2px 0 0; cursor:pointer; background:transparent; border:1px solid var(--line); border-radius:999px; padding:8px; font-family:inherit;">&copy; Thor 2026 · Timer v2.11</button>
   </div>
 
   <!-- RECIPE TAB -->
@@ -936,7 +940,7 @@
       <textarea id="recipeNotesInput" placeholder="Anything you want to remember about this recipe&hellip;" style="width:100%; box-sizing:border-box; height:120px; max-height:220px; overflow-y:auto; resize:vertical; border-radius:12px; border:1px solid var(--line-strong); padding:10px 12px; font-size:15px; font-family:inherit; color:var(--ink); line-height:1.4;"></textarea>
     </div>
     <button type="button" id="recipeBackBtnBottom" title="Back to Bake" style="width:40px; height:40px; border-radius:50%; border:1px solid var(--line); background:var(--card); box-shadow:var(--shadow-sm); display:flex; align-items:center; justify-content:center; cursor:pointer; padding:0; margin:12px auto 0;"><span style="display:inline-block; transform:rotate(-90deg); font-size:14px; color:var(--ink);">&#9650;</span></button>
-    <button type="button" id="openSaveBtnRecipe" style="display:block; width:100%; text-align:center; font-size:12px; color:var(--muted-light); margin:8px 0 0; cursor:pointer; background:transparent; border:1px solid var(--line); border-radius:999px; padding:8px; font-family:inherit;">&copy; Thor 2026 · Timer v2.9</button>
+    <button type="button" id="openSaveBtnRecipe" style="display:block; width:100%; text-align:center; font-size:12px; color:var(--muted-light); margin:8px 0 0; cursor:pointer; background:transparent; border:1px solid var(--line); border-radius:999px; padding:8px; font-family:inherit;">&copy; Thor 2026 · Timer v2.11</button>
   </div>
 
   <!-- TESTIMONIALS TAB -->
@@ -958,7 +962,7 @@
       </label>
     </div>
     <button type="button" id="testimonialsBackBtnBottom" title="Back to Bake" style="width:40px; height:40px; border-radius:50%; border:1px solid var(--line); background:var(--card); box-shadow:var(--shadow-sm); display:flex; align-items:center; justify-content:center; cursor:pointer; padding:0; margin:12px auto 0;"><span style="display:inline-block; transform:rotate(-90deg); font-size:14px; color:var(--ink);">&#9650;</span></button>
-    <button type="button" id="openSaveBtnTestimonials" style="display:block; width:100%; text-align:center; font-size:12px; color:var(--muted-light); margin:8px 0 0; cursor:pointer; background:transparent; border:1px solid var(--line); border-radius:999px; padding:8px; font-family:inherit;">&copy; Thor 2026 · Timer v2.9</button>
+    <button type="button" id="openSaveBtnTestimonials" style="display:block; width:100%; text-align:center; font-size:12px; color:var(--muted-light); margin:8px 0 0; cursor:pointer; background:transparent; border:1px solid var(--line); border-radius:999px; padding:8px; font-family:inherit;">&copy; Thor 2026 · Timer v2.11</button>
   </div>
 
   <!-- CALCULATOR TAB -->
@@ -1068,7 +1072,7 @@
     <button type="button" class="pill solid" id="levainCalcApplyBtn" style="width:100%; box-sizing:border-box; justify-content:center;">Use these amounts for Levain</button>
 
     <button type="button" id="calculatorBackBtnBottom" title="Back to Bake" style="width:40px; height:40px; border-radius:50%; border:1px solid var(--line); background:var(--card); box-shadow:var(--shadow-sm); display:flex; align-items:center; justify-content:center; cursor:pointer; padding:0; margin:12px auto 0;"><span style="display:inline-block; transform:rotate(-90deg); font-size:14px; color:var(--ink);">&#9650;</span></button>
-    <button type="button" id="openSaveBtnCalculator" style="display:block; width:100%; text-align:center; font-size:12px; color:var(--muted-light); margin:8px 0 0; cursor:pointer; background:transparent; border:1px solid var(--line); border-radius:999px; padding:8px; font-family:inherit;">&copy; Thor 2026 · Timer v2.9</button>
+    <button type="button" id="openSaveBtnCalculator" style="display:block; width:100%; text-align:center; font-size:12px; color:var(--muted-light); margin:8px 0 0; cursor:pointer; background:transparent; border:1px solid var(--line); border-radius:999px; padding:8px; font-family:inherit;">&copy; Thor 2026 · Timer v2.11</button>
   </div>
 
   <!-- DDT CALCULATOR TAB -->
@@ -1115,7 +1119,7 @@
     </div>
 
     <button type="button" id="ddtBackBtnBottom" title="Back to Bake" style="width:40px; height:40px; border-radius:50%; border:1px solid var(--line); background:var(--card); box-shadow:var(--shadow-sm); display:flex; align-items:center; justify-content:center; cursor:pointer; padding:0; margin:12px auto 0;"><span style="display:inline-block; transform:rotate(-90deg); font-size:14px; color:var(--ink);">&#9650;</span></button>
-    <button type="button" id="openSaveBtnDDT" style="display:block; width:100%; text-align:center; font-size:12px; color:var(--muted-light); margin:8px 0 0; cursor:pointer; background:transparent; border:1px solid var(--line); border-radius:999px; padding:8px; font-family:inherit;">&copy; Thor 2026 · Timer v2.9</button>
+    <button type="button" id="openSaveBtnDDT" style="display:block; width:100%; text-align:center; font-size:12px; color:var(--muted-light); margin:8px 0 0; cursor:pointer; background:transparent; border:1px solid var(--line); border-radius:999px; padding:8px; font-family:inherit;">&copy; Thor 2026 · Timer v2.11</button>
   </div>
 
   <!-- LOAF WEIGHT CALCULATOR TAB -->
@@ -1156,7 +1160,7 @@
     </div>
 
     <button type="button" id="loafWeightBackBtnBottom" title="Back to Bake" style="width:40px; height:40px; border-radius:50%; border:1px solid var(--line); background:var(--card); box-shadow:var(--shadow-sm); display:flex; align-items:center; justify-content:center; cursor:pointer; padding:0; margin:12px auto 0;"><span style="display:inline-block; transform:rotate(-90deg); font-size:14px; color:var(--ink);">&#9650;</span></button>
-    <button type="button" id="openSaveBtnLoafWeight" style="display:block; width:100%; text-align:center; font-size:12px; color:var(--muted-light); margin:8px 0 0; cursor:pointer; background:transparent; border:1px solid var(--line); border-radius:999px; padding:8px; font-family:inherit;">&copy; Thor 2026 · Timer v2.9</button>
+    <button type="button" id="openSaveBtnLoafWeight" style="display:block; width:100%; text-align:center; font-size:12px; color:var(--muted-light); margin:8px 0 0; cursor:pointer; background:transparent; border:1px solid var(--line); border-radius:999px; padding:8px; font-family:inherit;">&copy; Thor 2026 · Timer v2.11</button>
   </div>
 
   <nav class="tabbar">
@@ -2442,6 +2446,37 @@
     return null;
   }
 
+  // The time the previous step in the sequence ended -- what this step's
+  // Start Time should default to so the whole bake chains together:
+  //   Levain -> Autolyse -> Bulk -> (Folds) -> Final Proof -> Pre-Shape ->
+  //   Final Shaping -> Cold Proof -> Bake.
+  // Skipped steps are passed over. Bulk Fermentation runs alongside the
+  // folds and Final Proof, so it never counts as "the step before" Final
+  // Proof; the last fold's end time does instead.
+  function previousPhaseEndTime(phase) {
+    if (phase.key === "bulkRise") {
+      const fold = typeof getLatestFoldEndTime === "function" ? getLatestFoldEndTime() : null;
+      if (fold) return fold;
+    }
+    const idx = phases.indexOf(phase);
+    for (let i = idx - 1; i >= 0; i--) {
+      const other = phases[i];
+      if (other.key === "bulk" && phase.key === "bulkRise") continue;
+      if (other.doneNote === "Skipped") continue;
+      if (other.endTime) return other.endTime;
+    }
+    return null;
+  }
+  // Hands this step's end time on as the next step's Start Time (only when
+  // the next step has none yet).
+  function chainNextStart(phase) {
+    if (!phase.endTime) return;
+    const idx = phases.indexOf(phase);
+    if (phase.key === "bulk") return; // Final Proof is chained from the last fold instead
+    const next = phases[idx + 1];
+    if (next && !next.startTime) next.startTime = phase.endTime;
+  }
+
   // "HH:MM" (24h, from <input type="time">) -> "HH:MM" (24h)
   function formatTimeInputDisplay(hhmm) {
     if (!hhmm) return "";
@@ -2720,24 +2755,19 @@
     }
     const startTimeInput = panel.querySelector('[data-role="startTimeInput"]');
     if (startTimeInput) {
-      if (p.key === "bulkRise") {
-        // Final Proof follows straight on from the last stretch & fold /
-        // coil fold, so its Start Time should default to that fold's end
-        // time rather than "now" -- falls back to "now" only when no fold
-        // has been logged yet.
-        startTimeInput.addEventListener("focus", (e) => {
-          if (e.target.value) return;
-          const latestFoldEnd = getLatestFoldEndTime();
-          if (latestFoldEnd) {
-            e.target.value = formatTimeInputDisplay(latestFoldEnd);
-            e.target.select();
-          } else {
-            fillNowIfEmpty(e);
-          }
-        });
-      } else {
-        startTimeInput.addEventListener("focus", fillNowIfEmpty);
-      }
+      // Every step starts where the previous one ended (Final Proof starts
+      // at the last fold's end); falls back to "now" only for the first step
+      // or when the previous step has no end time yet.
+      startTimeInput.addEventListener("focus", (e) => {
+        if (e.target.value) return;
+        const prevEnd = previousPhaseEndTime(p);
+        if (prevEnd) {
+          e.target.value = formatTimeInputDisplay(prevEnd);
+          e.target.select();
+        } else {
+          fillNowIfEmpty(e);
+        }
+      });
       startTimeInput.addEventListener("input", maskTime24Input);
       startTimeInput.addEventListener("blur", (e) => {
         commitTime24Input(e, (val) => {
@@ -2790,13 +2820,7 @@
         commitTime24Input(e, (val) => {
           p.endTime = val;
           sessionStarted = true; if (!sessionStartedAt) sessionStartedAt = Date.now();
-          if (val) {
-            const idx = phases.indexOf(p);
-            const next = idx > -1 ? phases[idx + 1] : null;
-            if (next && !next.startTime) {
-              next.startTime = val;
-            }
-          }
+          if (val) chainNextStart(p);
           render();
           if (sessionStarted) snapshotSession();
         });
@@ -2934,9 +2958,12 @@
       // typed them in already — still editable afterward.
       if (!p.endTime) p.endTime = toTimeInputValue(new Date(now));
       if (!p.startTime) {
+        const prevEnd = previousPhaseEndTime(p);
         const prevAt = previousCompletionTimestamp(p);
-        if (prevAt) p.startTime = toTimeInputValue(new Date(prevAt));
+        if (prevEnd) p.startTime = prevEnd;
+        else if (prevAt) p.startTime = toTimeInputValue(new Date(prevAt));
       }
+      chainNextStart(p);
 
       const timeStr = new Date(now).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", hour12: false });
       const manualDuration = durationBetweenTimes(p.startTime, p.endTime);
@@ -5589,6 +5616,7 @@
     }
 
     function resetAllProgress() {
+      try { localStorage.removeItem(BAKE_CLOCK_KEY); } catch (e) {}
       phases.forEach((p) => {
         p.completed = false;
         p.completedAt = null;
@@ -5890,6 +5918,7 @@
     loafMultiplier = 1;
     sessionStarted = false;
     sessionStartedAt = null;
+    try { localStorage.removeItem(BAKE_CLOCK_KEY); } catch (e) {}
     recapPhotos = [];
     el("notes").value = "";
     const _recap = el("recapOverlay");
@@ -6309,6 +6338,55 @@
     if (!syncRef) { initFirebaseSync(); return; }
     syncPushNow();
   }
+
+  // Bake clock (top-right of the Bake tab): total time from the moment the
+  // Levain starts until the last bake step is done. It is worked out from
+  // clock timestamps every time it is drawn, never by counting ticks, so it
+  // is still exactly right after the phone has been locked or the page was
+  // frozen in the background.
+  const BAKE_CLOCK_KEY = "sourdoughBakeClockAnchor";
+  function bakeClockAnchor() {
+    const levain = phases.find((ph) => ph.key === "levain");
+    let c = null;
+    try { c = JSON.parse(localStorage.getItem(BAKE_CLOCK_KEY) || "null"); } catch (e) {}
+    const save = (o) => { try { localStorage.setItem(BAKE_CLOCK_KEY, JSON.stringify(o)); } catch (e) {} return o.at; };
+    if (!levain || (!levain.startTime && !levain.timerStartedAt)) {
+      if (c) { try { localStorage.removeItem(BAKE_CLOCK_KEY); } catch (e) {} }
+      return null;
+    }
+    if (levain.startTime) {
+      if (c && c.t === levain.startTime) return c.at;
+      const d = timeStringToDate(levain.startTime, new Date());
+      return d ? save({ t: levain.startTime, at: d.getTime() }) : null;
+    }
+    if (c && c.t === "timer") return c.at;
+    return save({ t: "timer", at: levain.timerStartedAt });
+  }
+  function bakeClockEnd() {
+    const last = ["uncoveredBake", "coveredBake"].map((k) => phases.find((ph) => ph.key === k))
+      .filter((ph) => ph && ph.completed && ph.doneNote !== "Skipped" && ph.completedAt);
+    const unc = phases.find((ph) => ph.key === "uncoveredBake");
+    if (!unc || !unc.completed || !last.length) return null;
+    return Math.max.apply(null, last.map((ph) => ph.completedAt));
+  }
+  function updateBakeClock() {
+    const box = el("bakeClock");
+    if (!box) return;
+    let startMs = null;
+    try { startMs = bakeClockAnchor(); } catch (e) {}
+    if (!startMs) { box.style.display = "none"; return; }
+    const endMs = bakeClockEnd();
+    const secs = Math.max(0, Math.floor(((endMs || Date.now()) - startMs) / 1000));
+    const h = Math.floor(secs / 3600), m = Math.floor((secs % 3600) / 60), sec = secs % 60;
+    el("bakeClockTime").textContent = h + ":" + String(m).padStart(2, "0") + ":" + String(sec).padStart(2, "0");
+    el("bakeClockLabel").textContent = endMs ? "Bake finished" : "Bake clock";
+    box.style.display = "block";
+  }
+  setInterval(updateBakeClock, 1000);
+  document.addEventListener("visibilitychange", updateBakeClock);
+  window.addEventListener("pageshow", updateBakeClock);
+  window.addEventListener("focus", updateBakeClock);
+  setTimeout(updateBakeClock, 300);
 
   // Any write to a sourdough-related localStorage key pushes a debounced
   // sync update, without needing to hunt down every mutation call site.
