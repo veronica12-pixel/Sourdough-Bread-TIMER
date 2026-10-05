@@ -864,12 +864,19 @@
   <!-- BAKE TAB -->
   <div class="tab-panel active" id="tab-bake">
     <div style="position:relative;">
-      <div id="bakeClock" style="display:none; position:absolute; top:2px; right:0; z-index:5; text-align:center; background:var(--card); border:1.5px solid var(--accent, #E091C7); border-radius:14px; padding:5px 11px 6px; box-shadow:0 2px 8px rgba(91,75,122,0.18);">
-        <div id="bakeClockLabel" style="font-size:10px; font-weight:700; letter-spacing:0.04em; text-transform:uppercase; color:var(--muted);">Bake clock</div>
-        <div id="bakeClockTime" style="font-size:20px; font-weight:800; color:var(--ink); font-variant-numeric:tabular-nums; line-height:1.15;">0:00:00</div>
-      </div>
       <h1 class="serif" id="pageTitle">Bake</h1>
-      <div id="recipeQtyRow" style="display:flex; flex-direction:column; flex-wrap:nowrap; align-items:flex-start; gap:8px; margin:4px 0; width:100%; max-width:100%; box-sizing:border-box;">
+      <div id="recipeQtyRow" style="position:relative; display:flex; flex-direction:column; flex-wrap:nowrap; align-items:flex-start; gap:8px; margin:4px 0; width:100%; max-width:100%; box-sizing:border-box;">
+        <div id="bakeClock" style="display:none; position:absolute; top:50%; right:0; transform:translateY(-50%); width:172px; height:117px; pointer-events:none;">
+          <svg viewBox="0 0 200 136" width="172" height="117" style="position:absolute; inset:0;" aria-hidden="true">
+            <defs><linearGradient id="loafFill" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFF8EC"/><stop offset="1" stop-color="#FDEBCF"/></linearGradient></defs>
+            <path d="M44 124 C36 124 34 116 34 108 V66 C14 62 10 38 28 24 C48 6 78 8 100 12 C122 8 152 6 172 24 C190 38 186 62 166 66 V108 C166 116 164 124 156 124Z" fill="url(#loafFill)" stroke="#D49A58" stroke-width="4.5" stroke-linejoin="round"/>
+            <g fill="#F0D3A6"><circle cx="58" cy="44" r="3"/><circle cx="148" cy="48" r="3.5"/><circle cx="52" cy="98" r="3"/><circle cx="150" cy="100" r="3"/><circle cx="100" cy="30" r="2.5"/></g>
+          </svg>
+          <div style="position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; padding-top:8px;">
+            <div id="bakeClockTime" style="font-size:25px; font-weight:800; color:#5B4B7A; font-variant-numeric:tabular-nums; line-height:1.05; letter-spacing:0.01em;">0:00:00</div>
+            <div id="bakeClockLabel" style="margin-top:3px; font-size:9.5px; font-weight:700; letter-spacing:0.07em; text-transform:uppercase; color:#A8794A;">Bake clock</div>
+          </div>
+        </div>
         <div style="position:relative; flex:0 0 auto; min-width:0; max-width:100%; display:flex; align-items:center; gap:8px;">
           <button type="button" id="recipeSelectBtn" style="display:inline-flex; align-items:center; gap:6px; font-size:16px; font-weight:700; color:var(--ink); background:var(--accent-tint); border:1px solid var(--accent); border-radius:999px; padding:10px 14px; font-family:inherit; cursor:pointer; max-width:100%; width:auto; box-sizing:border-box;">
             <span id="recipeHeart" style="display:none; font-size:16px; color:var(--accent); flex-shrink:0;">&#9829;</span>
@@ -912,7 +919,7 @@
 
     <div style="height:1px; background:var(--line); margin:8px 4px 0;"></div>
 
-    <button type="button" id="openSaveBtn" style="display:block; width:100%; text-align:center; font-size:12px; color:var(--muted-light); margin:2px 0 0; cursor:pointer; background:transparent; border:1px solid var(--line); border-radius:999px; padding:8px; font-family:inherit;">&copy; Thor 2026 · Timer v2.11</button>
+    <button type="button" id="openSaveBtn" style="display:block; width:100%; text-align:center; font-size:12px; color:var(--muted-light); margin:2px 0 0; cursor:pointer; background:transparent; border:1px solid var(--line); border-radius:999px; padding:8px; font-family:inherit;">&copy; Thor 2026 · Timer v2.13</button>
   </div>
 
   <!-- RECIPE TAB -->
@@ -940,7 +947,7 @@
       <textarea id="recipeNotesInput" placeholder="Anything you want to remember about this recipe&hellip;" style="width:100%; box-sizing:border-box; height:120px; max-height:220px; overflow-y:auto; resize:vertical; border-radius:12px; border:1px solid var(--line-strong); padding:10px 12px; font-size:15px; font-family:inherit; color:var(--ink); line-height:1.4;"></textarea>
     </div>
     <button type="button" id="recipeBackBtnBottom" title="Back to Bake" style="width:40px; height:40px; border-radius:50%; border:1px solid var(--line); background:var(--card); box-shadow:var(--shadow-sm); display:flex; align-items:center; justify-content:center; cursor:pointer; padding:0; margin:12px auto 0;"><span style="display:inline-block; transform:rotate(-90deg); font-size:14px; color:var(--ink);">&#9650;</span></button>
-    <button type="button" id="openSaveBtnRecipe" style="display:block; width:100%; text-align:center; font-size:12px; color:var(--muted-light); margin:8px 0 0; cursor:pointer; background:transparent; border:1px solid var(--line); border-radius:999px; padding:8px; font-family:inherit;">&copy; Thor 2026 · Timer v2.11</button>
+    <button type="button" id="openSaveBtnRecipe" style="display:block; width:100%; text-align:center; font-size:12px; color:var(--muted-light); margin:8px 0 0; cursor:pointer; background:transparent; border:1px solid var(--line); border-radius:999px; padding:8px; font-family:inherit;">&copy; Thor 2026 · Timer v2.13</button>
   </div>
 
   <!-- TESTIMONIALS TAB -->
@@ -962,7 +969,7 @@
       </label>
     </div>
     <button type="button" id="testimonialsBackBtnBottom" title="Back to Bake" style="width:40px; height:40px; border-radius:50%; border:1px solid var(--line); background:var(--card); box-shadow:var(--shadow-sm); display:flex; align-items:center; justify-content:center; cursor:pointer; padding:0; margin:12px auto 0;"><span style="display:inline-block; transform:rotate(-90deg); font-size:14px; color:var(--ink);">&#9650;</span></button>
-    <button type="button" id="openSaveBtnTestimonials" style="display:block; width:100%; text-align:center; font-size:12px; color:var(--muted-light); margin:8px 0 0; cursor:pointer; background:transparent; border:1px solid var(--line); border-radius:999px; padding:8px; font-family:inherit;">&copy; Thor 2026 · Timer v2.11</button>
+    <button type="button" id="openSaveBtnTestimonials" style="display:block; width:100%; text-align:center; font-size:12px; color:var(--muted-light); margin:8px 0 0; cursor:pointer; background:transparent; border:1px solid var(--line); border-radius:999px; padding:8px; font-family:inherit;">&copy; Thor 2026 · Timer v2.13</button>
   </div>
 
   <!-- CALCULATOR TAB -->
@@ -1072,7 +1079,7 @@
     <button type="button" class="pill solid" id="levainCalcApplyBtn" style="width:100%; box-sizing:border-box; justify-content:center;">Use these amounts for Levain</button>
 
     <button type="button" id="calculatorBackBtnBottom" title="Back to Bake" style="width:40px; height:40px; border-radius:50%; border:1px solid var(--line); background:var(--card); box-shadow:var(--shadow-sm); display:flex; align-items:center; justify-content:center; cursor:pointer; padding:0; margin:12px auto 0;"><span style="display:inline-block; transform:rotate(-90deg); font-size:14px; color:var(--ink);">&#9650;</span></button>
-    <button type="button" id="openSaveBtnCalculator" style="display:block; width:100%; text-align:center; font-size:12px; color:var(--muted-light); margin:8px 0 0; cursor:pointer; background:transparent; border:1px solid var(--line); border-radius:999px; padding:8px; font-family:inherit;">&copy; Thor 2026 · Timer v2.11</button>
+    <button type="button" id="openSaveBtnCalculator" style="display:block; width:100%; text-align:center; font-size:12px; color:var(--muted-light); margin:8px 0 0; cursor:pointer; background:transparent; border:1px solid var(--line); border-radius:999px; padding:8px; font-family:inherit;">&copy; Thor 2026 · Timer v2.13</button>
   </div>
 
   <!-- DDT CALCULATOR TAB -->
@@ -1119,7 +1126,7 @@
     </div>
 
     <button type="button" id="ddtBackBtnBottom" title="Back to Bake" style="width:40px; height:40px; border-radius:50%; border:1px solid var(--line); background:var(--card); box-shadow:var(--shadow-sm); display:flex; align-items:center; justify-content:center; cursor:pointer; padding:0; margin:12px auto 0;"><span style="display:inline-block; transform:rotate(-90deg); font-size:14px; color:var(--ink);">&#9650;</span></button>
-    <button type="button" id="openSaveBtnDDT" style="display:block; width:100%; text-align:center; font-size:12px; color:var(--muted-light); margin:8px 0 0; cursor:pointer; background:transparent; border:1px solid var(--line); border-radius:999px; padding:8px; font-family:inherit;">&copy; Thor 2026 · Timer v2.11</button>
+    <button type="button" id="openSaveBtnDDT" style="display:block; width:100%; text-align:center; font-size:12px; color:var(--muted-light); margin:8px 0 0; cursor:pointer; background:transparent; border:1px solid var(--line); border-radius:999px; padding:8px; font-family:inherit;">&copy; Thor 2026 · Timer v2.13</button>
   </div>
 
   <!-- LOAF WEIGHT CALCULATOR TAB -->
@@ -1160,7 +1167,7 @@
     </div>
 
     <button type="button" id="loafWeightBackBtnBottom" title="Back to Bake" style="width:40px; height:40px; border-radius:50%; border:1px solid var(--line); background:var(--card); box-shadow:var(--shadow-sm); display:flex; align-items:center; justify-content:center; cursor:pointer; padding:0; margin:12px auto 0;"><span style="display:inline-block; transform:rotate(-90deg); font-size:14px; color:var(--ink);">&#9650;</span></button>
-    <button type="button" id="openSaveBtnLoafWeight" style="display:block; width:100%; text-align:center; font-size:12px; color:var(--muted-light); margin:8px 0 0; cursor:pointer; background:transparent; border:1px solid var(--line); border-radius:999px; padding:8px; font-family:inherit;">&copy; Thor 2026 · Timer v2.11</button>
+    <button type="button" id="openSaveBtnLoafWeight" style="display:block; width:100%; text-align:center; font-size:12px; color:var(--muted-light); margin:8px 0 0; cursor:pointer; background:transparent; border:1px solid var(--line); border-radius:999px; padding:8px; font-family:inherit;">&copy; Thor 2026 · Timer v2.13</button>
   </div>
 
   <nav class="tabbar">
@@ -6374,13 +6381,20 @@
     if (!box) return;
     let startMs = null;
     try { startMs = bakeClockAnchor(); } catch (e) {}
-    if (!startMs) { box.style.display = "none"; return; }
+    if (!startMs) {
+      box.style.display = "none";
+      const row0 = el("recipeQtyRow");
+      if (row0) row0.style.paddingRight = "";
+      return;
+    }
     const endMs = bakeClockEnd();
     const secs = Math.max(0, Math.floor(((endMs || Date.now()) - startMs) / 1000));
     const h = Math.floor(secs / 3600), m = Math.floor((secs % 3600) / 60), sec = secs % 60;
     el("bakeClockTime").textContent = h + ":" + String(m).padStart(2, "0") + ":" + String(sec).padStart(2, "0");
     el("bakeClockLabel").textContent = endMs ? "Bake finished" : "Bake clock";
     box.style.display = "block";
+    const row = el("recipeQtyRow");
+    if (row) row.style.paddingRight = "178px";
   }
   setInterval(updateBakeClock, 1000);
   document.addEventListener("visibilitychange", updateBakeClock);
