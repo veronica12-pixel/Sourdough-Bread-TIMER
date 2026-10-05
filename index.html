@@ -851,6 +851,10 @@
         <h1 class="serif" style="margin:0; font-size:32px;">Bake Log</h1>
         <button class="collapse-btn" id="closeBakeLogBtn" style="width:36px; height:36px; font-size:18px;">&#10005;</button>
       </div>
+      <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; margin-top:-4px;">
+        <p id="bakeLogPhotoStatus" style="font-size:12px; color:var(--muted); margin:0; line-height:1.35;">Photos: checking…</p>
+        <button type="button" id="bakeLogPhotoRefreshBtn" style="flex-shrink:0; font-size:12px; font-weight:600; color:var(--ink); background:var(--card); border:1px solid var(--line-strong); border-radius:999px; padding:6px 12px; cursor:pointer; font-family:inherit;">Refresh photos</button>
+      </div>
       <div id="bakeLogContent"></div>
     </div>
   </div>
@@ -903,7 +907,7 @@
 
     <div style="height:1px; background:var(--line); margin:8px 4px 0;"></div>
 
-    <button type="button" id="openSaveBtn" style="display:block; width:100%; text-align:center; font-size:12px; color:var(--muted-light); margin:2px 0 0; cursor:pointer; background:transparent; border:1px solid var(--line); border-radius:999px; padding:8px; font-family:inherit;">&copy; Thor 2026 · Timer v2.4</button>
+    <button type="button" id="openSaveBtn" style="display:block; width:100%; text-align:center; font-size:12px; color:var(--muted-light); margin:2px 0 0; cursor:pointer; background:transparent; border:1px solid var(--line); border-radius:999px; padding:8px; font-family:inherit;">&copy; Thor 2026 · Timer v2.6</button>
   </div>
 
   <!-- RECIPE TAB -->
@@ -931,7 +935,7 @@
       <textarea id="recipeNotesInput" placeholder="Anything you want to remember about this recipe&hellip;" style="width:100%; box-sizing:border-box; height:120px; max-height:220px; overflow-y:auto; resize:vertical; border-radius:12px; border:1px solid var(--line-strong); padding:10px 12px; font-size:15px; font-family:inherit; color:var(--ink); line-height:1.4;"></textarea>
     </div>
     <button type="button" id="recipeBackBtnBottom" title="Back to Bake" style="width:40px; height:40px; border-radius:50%; border:1px solid var(--line); background:var(--card); box-shadow:var(--shadow-sm); display:flex; align-items:center; justify-content:center; cursor:pointer; padding:0; margin:12px auto 0;"><span style="display:inline-block; transform:rotate(-90deg); font-size:14px; color:var(--ink);">&#9650;</span></button>
-    <button type="button" id="openSaveBtnRecipe" style="display:block; width:100%; text-align:center; font-size:12px; color:var(--muted-light); margin:8px 0 0; cursor:pointer; background:transparent; border:1px solid var(--line); border-radius:999px; padding:8px; font-family:inherit;">&copy; Thor 2026 · Timer v2.4</button>
+    <button type="button" id="openSaveBtnRecipe" style="display:block; width:100%; text-align:center; font-size:12px; color:var(--muted-light); margin:8px 0 0; cursor:pointer; background:transparent; border:1px solid var(--line); border-radius:999px; padding:8px; font-family:inherit;">&copy; Thor 2026 · Timer v2.6</button>
   </div>
 
   <!-- TESTIMONIALS TAB -->
@@ -953,7 +957,7 @@
       </label>
     </div>
     <button type="button" id="testimonialsBackBtnBottom" title="Back to Bake" style="width:40px; height:40px; border-radius:50%; border:1px solid var(--line); background:var(--card); box-shadow:var(--shadow-sm); display:flex; align-items:center; justify-content:center; cursor:pointer; padding:0; margin:12px auto 0;"><span style="display:inline-block; transform:rotate(-90deg); font-size:14px; color:var(--ink);">&#9650;</span></button>
-    <button type="button" id="openSaveBtnTestimonials" style="display:block; width:100%; text-align:center; font-size:12px; color:var(--muted-light); margin:8px 0 0; cursor:pointer; background:transparent; border:1px solid var(--line); border-radius:999px; padding:8px; font-family:inherit;">&copy; Thor 2026 · Timer v2.4</button>
+    <button type="button" id="openSaveBtnTestimonials" style="display:block; width:100%; text-align:center; font-size:12px; color:var(--muted-light); margin:8px 0 0; cursor:pointer; background:transparent; border:1px solid var(--line); border-radius:999px; padding:8px; font-family:inherit;">&copy; Thor 2026 · Timer v2.6</button>
   </div>
 
   <!-- CALCULATOR TAB -->
@@ -1063,7 +1067,7 @@
     <button type="button" class="pill solid" id="levainCalcApplyBtn" style="width:100%; box-sizing:border-box; justify-content:center;">Use these amounts for Levain</button>
 
     <button type="button" id="calculatorBackBtnBottom" title="Back to Bake" style="width:40px; height:40px; border-radius:50%; border:1px solid var(--line); background:var(--card); box-shadow:var(--shadow-sm); display:flex; align-items:center; justify-content:center; cursor:pointer; padding:0; margin:12px auto 0;"><span style="display:inline-block; transform:rotate(-90deg); font-size:14px; color:var(--ink);">&#9650;</span></button>
-    <button type="button" id="openSaveBtnCalculator" style="display:block; width:100%; text-align:center; font-size:12px; color:var(--muted-light); margin:8px 0 0; cursor:pointer; background:transparent; border:1px solid var(--line); border-radius:999px; padding:8px; font-family:inherit;">&copy; Thor 2026 · Timer v2.4</button>
+    <button type="button" id="openSaveBtnCalculator" style="display:block; width:100%; text-align:center; font-size:12px; color:var(--muted-light); margin:8px 0 0; cursor:pointer; background:transparent; border:1px solid var(--line); border-radius:999px; padding:8px; font-family:inherit;">&copy; Thor 2026 · Timer v2.6</button>
   </div>
 
   <!-- DDT CALCULATOR TAB -->
@@ -1110,7 +1114,7 @@
     </div>
 
     <button type="button" id="ddtBackBtnBottom" title="Back to Bake" style="width:40px; height:40px; border-radius:50%; border:1px solid var(--line); background:var(--card); box-shadow:var(--shadow-sm); display:flex; align-items:center; justify-content:center; cursor:pointer; padding:0; margin:12px auto 0;"><span style="display:inline-block; transform:rotate(-90deg); font-size:14px; color:var(--ink);">&#9650;</span></button>
-    <button type="button" id="openSaveBtnDDT" style="display:block; width:100%; text-align:center; font-size:12px; color:var(--muted-light); margin:8px 0 0; cursor:pointer; background:transparent; border:1px solid var(--line); border-radius:999px; padding:8px; font-family:inherit;">&copy; Thor 2026 · Timer v2.4</button>
+    <button type="button" id="openSaveBtnDDT" style="display:block; width:100%; text-align:center; font-size:12px; color:var(--muted-light); margin:8px 0 0; cursor:pointer; background:transparent; border:1px solid var(--line); border-radius:999px; padding:8px; font-family:inherit;">&copy; Thor 2026 · Timer v2.6</button>
   </div>
 
   <!-- LOAF WEIGHT CALCULATOR TAB -->
@@ -1151,7 +1155,7 @@
     </div>
 
     <button type="button" id="loafWeightBackBtnBottom" title="Back to Bake" style="width:40px; height:40px; border-radius:50%; border:1px solid var(--line); background:var(--card); box-shadow:var(--shadow-sm); display:flex; align-items:center; justify-content:center; cursor:pointer; padding:0; margin:12px auto 0;"><span style="display:inline-block; transform:rotate(-90deg); font-size:14px; color:var(--ink);">&#9650;</span></button>
-    <button type="button" id="openSaveBtnLoafWeight" style="display:block; width:100%; text-align:center; font-size:12px; color:var(--muted-light); margin:8px 0 0; cursor:pointer; background:transparent; border:1px solid var(--line); border-radius:999px; padding:8px; font-family:inherit;">&copy; Thor 2026 · Timer v2.4</button>
+    <button type="button" id="openSaveBtnLoafWeight" style="display:block; width:100%; text-align:center; font-size:12px; color:var(--muted-light); margin:8px 0 0; cursor:pointer; background:transparent; border:1px solid var(--line); border-radius:999px; padding:8px; font-family:inherit;">&copy; Thor 2026 · Timer v2.6</button>
   </div>
 
   <nav class="tabbar">
@@ -4804,6 +4808,7 @@
   function renderBakeLog() {
     repairBakeLogTotals();
     if (typeof backfillPhotosToCloud === "function") backfillPhotosToCloud();
+    updatePhotoSyncStatus();
     const log = getBakeLog();
     const content = el("bakeLogContent");
     if (log.length === 0) {
@@ -5966,7 +5971,7 @@
       // nothing — instead of mistaking our own write for an incoming change
       // from another device and reloading mid-edit.
       try { localStorage.setItem("sourdoughSyncLastApplied", String(updatedAt)); } catch (e) {}
-      syncRef.set({ updatedAt: updatedAt, localStorage: data.localStorage }).then(() => {
+      syncRef.update({ updatedAt: updatedAt, localStorage: data.localStorage }).then(() => {
         syncSetStatus("synced-now");
       }).catch((err) => {
         console.error("Sync push failed", err);
@@ -5981,10 +5986,10 @@
   // separate cloud path carries just the photo bytes, keyed by the same ref
   // id a Bake Log entry already points to.
   //
-  // It is deliberately a TOP-LEVEL path, not a child of "sourdoughBreadApp":
-  // syncPushNow() does syncRef.set({...}), which replaces everything under
-  // that node, so photos stored inside it were wiped by the next text sync.
-  const PHOTO_CLOUD_PATH = "sourdoughBreadPhotos";
+  // It sits inside "sourdoughBreadApp" because that is the only part of the
+  // database the security rules allow (a separate top-level path was denied).
+  // syncPushNow() uses update(), not set(), so it never wipes this folder.
+  const PHOTO_CLOUD_PATH = "sourdoughBreadApp/photoStore";
   let photoSyncError = "";
   let photoSyncPulled = 0;
   const cloudPhotoKeys = new Set();   // ids of photos that are in the cloud right now
@@ -5994,15 +5999,24 @@
   // One line that says exactly where the photos are, so a missing picture can
   // be traced: listed in the Bake Log, held on THIS device, held in the cloud.
   async function updatePhotoSyncStatus() {
-    const s = document.getElementById("syncPhotoStatus");
-    if (!s) return;
-    const refs = [];
-    getBakeLog().forEach((r) => (r.photos || []).forEach((p) => { if (isPhotoRef(p) && refs.indexOf(p) < 0) refs.push(p); }));
-    const problem = photoSyncError ? " Problem: " + photoSyncError : "";
-    if (!refs.length) { s.textContent = "Photos: none in the Bake Log yet." + problem; return; }
-    const here = (await Promise.all(refs.map((r) => hasPhotoInDb(r)))).filter(Boolean).length;
-    const cloud = refs.filter((r) => cloudPhotoKeys.has(r.slice(4))).length;
-    s.textContent = "Photos: " + refs.length + " in the Bake Log \u00b7 " + here + " on this device \u00b7 " + cloud + " in the cloud." + problem;
+    const targets = ["syncPhotoStatus", "bakeLogPhotoStatus"].map((id) => document.getElementById(id)).filter(Boolean);
+    if (!targets.length) return;
+    let text;
+    try {
+      const refs = [];
+      getBakeLog().forEach((r) => (r.photos || []).forEach((p) => { if (isPhotoRef(p) && refs.indexOf(p) < 0) refs.push(p); }));
+      const problem = photoSyncError ? " Problem: " + photoSyncError : "";
+      if (!refs.length) {
+        text = "Photos: none in the Bake Log yet." + problem;
+      } else {
+        const here = (await Promise.all(refs.map((r) => hasPhotoInDb(r)))).filter(Boolean).length;
+        const cloud = refs.filter((r) => cloudPhotoKeys.has(r.slice(4))).length;
+        text = "Photos: " + refs.length + " in the Bake Log \u00b7 " + here + " on this device \u00b7 " + cloud + " in the cloud." + problem;
+      }
+    } catch (e) {
+      text = "Photos: couldn't check (" + ((e && e.message) || e) + ")";
+    }
+    targets.forEach((t) => { t.textContent = text; });
   }
 
   function pushPhotoToSync(ref, dataUrl) {
@@ -6079,7 +6093,7 @@
       updatePhotoSyncStatus();
     });
     syncPhotoRef.on("child_changed", onPhoto);
-    syncPhotoRef.on("child_removed", (snap) => { cloudPhotoKeys.delete(snap.key); updatePhotoSyncStatus(); });
+    syncPhotoRef.on("child_removed", (snap) => { cloudPhotoKeys.delete(snap.key); updatePhotoSyncStatus(); setTimeout(() => backfillPhotosToCloud(true), 1500); });
     // Give the cloud's existing list a few seconds to arrive before deciding
     // what is missing from it.
     setTimeout(() => backfillPhotosToCloud(true), 5000);
@@ -6133,8 +6147,7 @@
       syncDb = firebase.database();
       syncRef = syncDb.ref("sourdoughBreadApp");
       initPhotoSync();
-      syncRef.on("value", (snap) => {
-        const remote = snap.val();
+      const handleRemote = (remote) => {
         if (!remote || !remote.localStorage) {
           syncSetStatus("online");
           if (!syncReceivedFirst) { syncReceivedFirst = true; syncPushNow(); }
@@ -6178,6 +6191,20 @@
           syncSetStatus("online");
         }
         syncReceivedFirst = true;
+      };
+      // Listen only to the small "updatedAt" marker so the photos stored next
+      // to the text data are not downloaded again on every text sync.
+      syncRef.child("updatedAt").on("value", (snap) => {
+        const at = snap.val();
+        if (!at) { handleRemote(null); return; }
+        const lastApplied = parseInt(localStorage.getItem("sourdoughSyncLastApplied") || "0", 10);
+        if (at <= lastApplied) { handleRemote({ updatedAt: at, localStorage: {} }); return; }
+        syncRef.child("localStorage").once("value").then((ls) => {
+          handleRemote({ updatedAt: at, localStorage: ls.val() || null });
+        }).catch((err) => {
+          console.error("Sync read failed", err);
+          syncSetStatus("offline");
+        });
       }, (err) => {
         console.error("Sync read failed", err);
         syncSetStatus("offline");
@@ -6619,6 +6646,18 @@ async function actionCreatePdfBakeLog() {
     }
   });
 
+  (function wirePhotoRefreshBtn() {
+    const btn = el("bakeLogPhotoRefreshBtn");
+    if (!btn) return;
+    btn.addEventListener("click", async () => {
+      btn.textContent = "Checking…";
+      try { await backfillPhotosToCloud(true); } catch (e) {}
+      const content = el("bakeLogContent");
+      if (content) hydratePhotoRefs(content);
+      await updatePhotoSyncStatus();
+      btn.textContent = "Refresh photos";
+    });
+  })();
   repairBakeLogTotals();
   initFirebaseSync();
   migrateBakeLogPhotosToDb();
